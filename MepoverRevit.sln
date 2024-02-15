@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34408.163
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MepoverSharedProject", "MepoverSharedProject\MepoverSharedProject.shproj", "{A064D738-A3A2-4AA7-B519-40846ACAB097}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MepoverRevit.2021", "MepoverRevit.2021\MepoverRevit.2021.csproj", "{E39B487F-CE70-48C4-96AB-619F0F8D9B9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MepoverRevit.2022", "MepoverRevit.2022\MepoverRevit.2022.csproj", "{0062C8E5-ED97-4C6F-BA75-7E42199B10CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MepoverRevit.2023", "MepoverRevit.2023\MepoverRevit.2023.csproj", "{025F3A33-52F6-49A5-A1A3-EEF74808C2B3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MepoverRevit.2024", "MepoverRevit.2024\MepoverRevit.2024.csproj", "{1E905E71-CC78-4977-8124-F9CA093C8CD0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E39B487F-CE70-48C4-96AB-619F0F8D9B9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E39B487F-CE70-48C4-96AB-619F0F8D9B9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E39B487F-CE70-48C4-96AB-619F0F8D9B9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E39B487F-CE70-48C4-96AB-619F0F8D9B9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0062C8E5-ED97-4C6F-BA75-7E42199B10CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0062C8E5-ED97-4C6F-BA75-7E42199B10CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0062C8E5-ED97-4C6F-BA75-7E42199B10CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0062C8E5-ED97-4C6F-BA75-7E42199B10CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{025F3A33-52F6-49A5-A1A3-EEF74808C2B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{025F3A33-52F6-49A5-A1A3-EEF74808C2B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{025F3A33-52F6-49A5-A1A3-EEF74808C2B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{025F3A33-52F6-49A5-A1A3-EEF74808C2B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E905E71-CC78-4977-8124-F9CA093C8CD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E905E71-CC78-4977-8124-F9CA093C8CD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E905E71-CC78-4977-8124-F9CA093C8CD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E905E71-CC78-4977-8124-F9CA093C8CD0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B9A818AC-B2B7-4493-A793-0F79EE83B55C}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		MepoverSharedProject\MepoverSharedProject.projitems*{0062c8e5-ed97-4c6f-ba75-7e42199b10ce}*SharedItemsImports = 4
+		MepoverSharedProject\MepoverSharedProject.projitems*{025f3a33-52f6-49a5-a1a3-eef74808c2b3}*SharedItemsImports = 4
+		MepoverSharedProject\MepoverSharedProject.projitems*{1e905e71-cc78-4977-8124-f9ca093c8cd0}*SharedItemsImports = 4
+		MepoverSharedProject\MepoverSharedProject.projitems*{a064d738-a3a2-4aa7-b519-40846acab097}*SharedItemsImports = 13
+		MepoverSharedProject\MepoverSharedProject.projitems*{e39b487f-ce70-48c4-96ab-619f0f8d9b9a}*SharedItemsImports = 4
+	EndGlobalSection
+EndGlobal
