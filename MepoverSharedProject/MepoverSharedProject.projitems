@@ -11,6 +11,10 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RevitApplication.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\DataGridColumnTPO.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\RelayCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\RequestHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\RevitService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\SheetCopierViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\SheetCopierCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\SheetCopierWindow.xaml.cs">
@@ -42,5 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\fl_iconBMP.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\SheetCopier.png" />
   </ItemGroup>
 </Project>

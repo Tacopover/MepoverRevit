@@ -17,6 +17,47 @@ namespace MepoverSharedProject.SheetCopier
             InitializeComponent();
         }
 
+        private void FilterDoubleClick(object sender, EventArgs e)
+        {
+            System.Windows.Controls.TextBox textbox = sender as System.Windows.Controls.TextBox;
+            //do nothing, just testing
+        }
+
+        private void HeaderTextChanged(object sender, EventArgs e)
+        {
+            System.Windows.Controls.TextBox textbox = sender as System.Windows.Controls.TextBox;
+            string filterText = textbox.Text;
+
+            DataGridColumnHeader columnHeader = FindParent<DataGridColumnHeader>(textbox);
+
+            if (columnHeader != null)
+            {
+                FilterHeader(filterText, columnHeader);
+            }
+        }
+
+        public void FilterHeader(string filterText, DataGridColumnHeader columnHeader)
+        {
+            var viewModel = DataContext as SheetCopierViewModel;
+            viewModel.FilterHeader(filterText, columnHeader);
+        }
+
+        private T FindParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject parent = VisualTreeHelper.GetParent(child);
+            if (parent == null)
+                return null;
+
+            if (parent is T typedParent)
+                return typedParent;
+
+            return FindParent<T>(parent);
+        }
+        public void Dispose()
+        {
+            Close();
+        }
+
         private void ButtonMinimize_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;

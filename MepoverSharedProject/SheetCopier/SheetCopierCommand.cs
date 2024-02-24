@@ -17,26 +17,26 @@ namespace MepoverSharedProject.SheetCopier
     {
         private SheetCopierViewModel mainViewModel;
         public static IntPtr WindowHandle;
-        public static int REVITVERSION { get; private set; } // Set only once and read-only
-
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             try
             {
                 UIApplication uiApp = commandData.Application;
-                REVITVERSION = int.Parse(uiApp.Application.VersionNumber);
                 if (mainViewModel == null)
                 {
-                    mainViewModel = new SheetCopierViewModel();
+                    mainViewModel = new SheetCopierViewModel(uiApp);
                 }
-
-                ElementId id = new ElementId(0);
-
-#if REVIT2021 || REVIT2022 || REVIT2023
-                int idInt = id.IntegerValue;
-#else
-                int idInt = (int)id.Value;
-#endif
+                else
+                {
+                    if (mainViewModel.IsWindowClosed)
+                    {
+                        mainViewModel.ShowMainWindow();
+                    }
+                    else
+                    {
+                        mainViewModel.MainWindow.Activate();
+                    }
+                }
 
                 return Result.Succeeded;
             }

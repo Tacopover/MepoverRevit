@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MepoverRevit.2023", "Mepove
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MepoverRevit.2024", "MepoverRevit.2024\MepoverRevit.2024.csproj", "{1E905E71-CC78-4977-8124-F9CA093C8CD0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp1", "WpfApp1\WpfApp1.csproj", "{EBA20F97-A282-4E4B-94B0-A3E7EC9F8106}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WixSharp Installer", "WixSharp Installer\WixSharp Installer.csproj", "{77E51E71-FF51-4949-A571-B846467BA7D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +39,10 @@ Global
 		{1E905E71-CC78-4977-8124-F9CA093C8CD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E905E71-CC78-4977-8124-F9CA093C8CD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E905E71-CC78-4977-8124-F9CA093C8CD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBA20F97-A282-4E4B-94B0-A3E7EC9F8106}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBA20F97-A282-4E4B-94B0-A3E7EC9F8106}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77E51E71-FF51-4949-A571-B846467BA7D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77E51E71-FF51-4949-A571-B846467BA7D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

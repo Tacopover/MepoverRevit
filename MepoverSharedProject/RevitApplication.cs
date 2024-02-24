@@ -17,7 +17,7 @@ namespace MepoverSharedProject
         {
             //string tabname = "dontneedit";
             //application.CreateRibbonTab(tabname);
-            RibbonPanel ribbonPanel = application.CreateRibbonPanel("SheetCopier");
+            RibbonPanel ribbonPanel = application.CreateRibbonPanel("MEPover");
 
             string thisAssemblyPath = Assembly.GetExecutingAssembly().Location;
             PushButtonData CCData = new PushButtonData("SC",
@@ -31,7 +31,7 @@ namespace MepoverSharedProject
             CCbutton.ToolTip = "Start SheetCopier";
             //Icon = PngImageSource("MepoverSharedProject.resources.fl_icon.png");
             var assembly = Assembly.GetExecutingAssembly();
-            Icon = Utils.LoadEmbeddedImage(assembly, "fl_icon.png");
+            Icon = Utils.LoadEmbeddedImage(assembly, "SheetCopier.png");
             CCbutton.LargeImage = Icon;
 
         }

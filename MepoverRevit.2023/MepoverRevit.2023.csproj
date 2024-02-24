@@ -9,8 +9,8 @@
     <ProjectGuid>{025F3A33-52F6-49A5-A1A3-EEF74808C2B3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MepoverRevit2022</RootNamespace>
-    <AssemblyName>MepoverRevit.2022</AssemblyName>
+    <RootNamespace>MepoverRevit2023</RootNamespace>
+    <AssemblyName>MepoverRevit.2023</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
