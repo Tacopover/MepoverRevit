@@ -15,8 +15,6 @@ namespace MepoverSharedProject
         public static System.Windows.Media.ImageSource Icon;
         void AddRibbonPanel(UIControlledApplication application)
         {
-            //string tabname = "dontneedit";
-            //application.CreateRibbonTab(tabname);
             RibbonPanel ribbonPanel = application.CreateRibbonPanel("MEPover");
 
             string thisAssemblyPath = Assembly.GetExecutingAssembly().Location;
@@ -29,7 +27,6 @@ namespace MepoverSharedProject
 
             PushButton CCbutton = ribbonPanel.AddItem(CCData) as PushButton;
             CCbutton.ToolTip = "Start SheetCopier";
-            //Icon = PngImageSource("MepoverSharedProject.resources.fl_icon.png");
             var assembly = Assembly.GetExecutingAssembly();
             Icon = Utils.LoadEmbeddedImage(assembly, "SheetCopier.png");
             CCbutton.LargeImage = Icon;
@@ -53,16 +50,6 @@ namespace MepoverSharedProject
         {
             return Result.Succeeded;
         }
-
-        private System.Windows.Media.ImageSource PngImageSource(string embeddedPath)
-        {
-            Stream stream = GetType().Assembly.GetManifestResourceStream(embeddedPath);
-            //var decoder = new System.Windows.Media.Imaging.PngBitmapDecoder(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
-            BitmapDecoder decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
-
-            return decoder.Frames[0];
-        }
-
 
     }
 }

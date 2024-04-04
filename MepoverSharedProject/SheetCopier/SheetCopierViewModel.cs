@@ -70,7 +70,7 @@ namespace MepoverSharedProject.SheetCopier
         List<DataGridTextColumnTPO> filteredColumns = new List<DataGridTextColumnTPO>();
 
         public Dictionary<string, bool> AnnotationChecks;
-        public bool IsWindowClosed = true;
+        public bool IsWindowClosed { get; set; } = true;
 
         #region properties
         private SheetCopierWindow _mainWindow;
@@ -217,6 +217,9 @@ namespace MepoverSharedProject.SheetCopier
         {
             if (IsWindowClosed)
             {
+                MainWindow = new SheetCopierWindow() { DataContext = this };
+                handler = new RequestHandler(this, revitService);
+                exEvent = ExternalEvent.Create(handler);
                 WindowInteropHelper helper = new WindowInteropHelper(MainWindow);
                 helper.Owner = uiApp.MainWindowHandle;
                 MainWindow.Show();

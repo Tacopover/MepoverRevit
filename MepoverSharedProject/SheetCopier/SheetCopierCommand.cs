@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using UIFramework;
 
 namespace MepoverSharedProject.SheetCopier
 {
@@ -30,6 +31,7 @@ namespace MepoverSharedProject.SheetCopier
                 {
                     if (mainViewModel.IsWindowClosed)
                     {
+
                         mainViewModel.ShowMainWindow();
                     }
                     else
