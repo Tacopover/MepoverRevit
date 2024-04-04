@@ -1,6 +1,6 @@
 ## MepoverRevit Description
 This is the code for my MepoverRevit Revit application. I have taken this [post](https://archi-lab.net/how-to-maintain-revit-plugins-for-multiple-versions-continued/) by the great Konrad Sobon as inspiration for the multi version shared project setup. I think this is a really clean solution for handling multiple versions of Revit. 
-The installer is created with WixSharp. There are some references to my local drive in that project for the background images and license file that will need to be replaced if you intend to create your own installer. The installer itself can be found in the Release section.
+The installer is created with WixSharp. There are some references to my local drive in that project for the background images and license file that will need to be replaced if you intend to create your own installer. The installer itself can be found in the [Release](https://github.com/Tacopover/MepoverRevit/releases/) section.
 Right now this project only hosts the SheetCopier plugin, but I might add some more plugins in the future.
 
 ## SheetCopier description
