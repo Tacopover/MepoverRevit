@@ -1,7 +1,6 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using MepoverSharedProject.SheetCopier.Commands;
-using MepoverSharedProject.Utilities;
+using MepoverSharedProject;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,8 +16,9 @@ using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Media;
 using UIFramework;
+using Utilities;
 
-namespace MepoverSharedProject.SheetCopier
+namespace SheetCopier
 {
     public class SheetCopierViewModel : BaseViewModel
     {

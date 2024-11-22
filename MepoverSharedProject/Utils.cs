@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Media.Imaging;
 
-namespace MepoverSharedProject.Utilities
+namespace Utilities
 {
     public static class Utils
     {

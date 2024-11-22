@@ -1,12 +1,12 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using MepoverSharedProject.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows.Media.Imaging;
+using Utilities;
 
 namespace MepoverSharedProject
 {
@@ -21,7 +21,7 @@ namespace MepoverSharedProject
             PushButtonData CCData = new PushButtonData("SC",
                 "SheetCopier",
                 thisAssemblyPath,
-                "MepoverSharedProject.SheetCopier.RevitCommand");
+                "SheetCopier.RevitCommand");
 
             //MethodBase.GetCurrentMethod().DeclaringType?.FullName
 

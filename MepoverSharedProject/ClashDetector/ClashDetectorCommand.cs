@@ -1,6 +1,7 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using ClashDetector.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,22 +11,27 @@ using System.Threading.Tasks;
 using System.Windows;
 using UIFramework;
 
-namespace SheetCopier
+namespace ClashDetector
 {
     [TransactionAttribute(TransactionMode.Manual)]
     [RegenerationAttribute(RegenerationOption.Manual)]
-    public class RevitCommand : IExternalCommand
+    public class ClashDetectorCommand : IExternalCommand
     {
-        private SheetCopierViewModel mainViewModel;
+        private ClashDetectorViewModel mainViewModel;
+        private RevitClashService revitService;
         public static IntPtr WindowHandle;
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             try
             {
                 UIApplication uiApp = commandData.Application;
+                if (revitService == null)
+                {
+                    revitService = new RevitClashService(uiApp);
+                }
                 if (mainViewModel == null)
                 {
-                    mainViewModel = new SheetCopierViewModel(uiApp);
+                    mainViewModel = new ClashDetectorViewModel(revitService);
                 }
                 else
                 {
@@ -56,7 +62,7 @@ namespace SheetCopier
             PushButtonData CCData = new PushButtonData("SC",
                                "SheetCopier",
                                               thisAssemblyPath,
-                                                             typeof(RevitCommand).FullName);
+                                                             typeof(ClashDetectorCommand).FullName);
             PushButton CCbutton = ribbonPanel.AddItem(CCData) as PushButton;
             CCbutton.ToolTip = "Start SheetCopier";
             //CCbutton.LargeImage = mainViewModel.Icon;

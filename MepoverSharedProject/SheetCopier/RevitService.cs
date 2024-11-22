@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace MepoverSharedProject.SheetCopier
+namespace SheetCopier
 {
     public class RevitService
     {
