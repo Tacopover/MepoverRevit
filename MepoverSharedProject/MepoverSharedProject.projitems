@@ -13,6 +13,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashDetectorCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\Clash.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\ElementCollector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\RevitClashService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\CategoriesViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\HostLinkViewModel.cs" />

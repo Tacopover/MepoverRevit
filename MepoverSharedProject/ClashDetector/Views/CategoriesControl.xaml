@@ -5,33 +5,55 @@
     xmlns:local="using:ClashDetector.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     mc:Ignorable="d"
-    d:DesignHeight="300"
-    d:DesignWidth="400">
+    d:DesignHeight="600"
+    d:DesignWidth="400"
+    d:Background="White">
 
     <Grid>
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="60"/>
+            <RowDefinition Height="80"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="0.3*"/>
             <ColumnDefinition Width="0.3*"/>
         </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Vertical" Grid.ColumnSpan="2">
 
-        <TextBlock Text="Categories A:" 
+            <TextBlock Text="If enabled the categories A from models A will be clashed against the categories B from models B. If disabled all categories will be clashed against each other." 
+                       TextWrapping="Wrap"
                        HorizontalAlignment="Center" 
+                       Grid.ColumnSpan="2" 
+                       VerticalAlignment="Top" FontStyle="Italic" FontSize="12"/>
+
+            <ToggleButton HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          Margin="10,5"
+                          Width="50" 
+                          Height="24" 
+                          BorderBrush="Transparent"
+                          Content="Enable"
+                          IsChecked="{Binding ClashSettings.IsCategoriesEnabled}"/>
+        </StackPanel>
+                    
+        
+        
+
+            <TextBlock Text="Categories A:" 
+                       HorizontalAlignment="Left" 
                        Margin="10,0,0,0" 
-                       VerticalAlignment="Center" 
+                       VerticalAlignment="Bottom" 
                        FontSize="18" 
                        FontWeight="Bold"/>
 
         <TextBlock Text="Categories B:" 
                        Grid.Column="1"
-                       HorizontalAlignment="Center" 
+                       HorizontalAlignment="Left" 
                        Margin="10,0,0,0" 
-                       VerticalAlignment="Center" 
+                       VerticalAlignment="Bottom" 
                        FontSize="18" 
                        FontWeight="Bold"/>
 
@@ -39,7 +61,8 @@
                  Grid.Column="0" 
                  Grid.Row="1" 
                  ItemsSource="{Binding ClashSettings.Categories1, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                 SelectionMode="Multiple">
+                 SelectionMode="Multiple"
+                 IsEnabled="{Binding ClashSettings.IsCategoriesEnabled}">
             <ListBox.Resources>
                 <!--<Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource VMScrollBar}">
                     <Setter Property="Orientation" Value="Vertical"/>
@@ -66,7 +89,8 @@
                  Grid.Column="1" 
                  Grid.Row="1" 
                  ItemsSource="{Binding ClashSettings.Categories2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                 SelectionMode="Multiple">
+                 SelectionMode="Multiple"
+                 IsEnabled="{Binding ClashSettings.IsCategoriesEnabled}">
             <ListBox.Resources>
                 <!--<Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource VMScrollBar}">
                     <Setter Property="Orientation" Value="Vertical"/>

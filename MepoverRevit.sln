@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp1", "WpfApp1\WpfApp1.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WixSharp Installer", "WixSharp Installer\WixSharp Installer.csproj", "{77E51E71-FF51-4949-A571-B846467BA7D3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RevitClashDetectorUI", "RevitClashDetectorUI\RevitClashDetectorUI.csproj", "{5023888F-3A80-4114-8195-80C1A91C5686}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClashDetectorUI", "ClashDetectorUI\ClashDetectorUI.csproj", "{58B4E998-B328-4310-B116-1A24D0CA0659}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +47,14 @@ Global
 		{EBA20F97-A282-4E4B-94B0-A3E7EC9F8106}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77E51E71-FF51-4949-A571-B846467BA7D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{77E51E71-FF51-4949-A571-B846467BA7D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5023888F-3A80-4114-8195-80C1A91C5686}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5023888F-3A80-4114-8195-80C1A91C5686}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5023888F-3A80-4114-8195-80C1A91C5686}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5023888F-3A80-4114-8195-80C1A91C5686}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58B4E998-B328-4310-B116-1A24D0CA0659}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58B4E998-B328-4310-B116-1A24D0CA0659}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58B4E998-B328-4310-B116-1A24D0CA0659}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58B4E998-B328-4310-B116-1A24D0CA0659}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

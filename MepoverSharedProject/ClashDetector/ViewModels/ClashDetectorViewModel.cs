@@ -47,7 +47,7 @@ namespace ClashDetector.ViewModels
             {
                 if (_modelsViewModel == null)
                 {
-                    _modelsViewModel = new HostLinkViewModel();
+                    _modelsViewModel = new HostLinkViewModel(revitService.Settings);
                 }
                 return _modelsViewModel;
             }
@@ -148,6 +148,7 @@ namespace ClashDetector.ViewModels
                 default:
                     throw new ArgumentException("Invalid navigation target", nameof(parameter));
             }
+            revitService.SendMessage("Switched to " + SelectedButton);
         }
 
         private void RunClashes()
@@ -164,7 +165,7 @@ namespace ClashDetector.ViewModels
                 //exEvent = ExternalEvent.Create(handler);
                 WindowInteropHelper helper = new WindowInteropHelper(MainWindow);
                 helper.Owner = revitService.UIApp.MainWindowHandle;
-                MainWindow.Show();
+                MainWindow.ShowDialog();
                 IsWindowClosed = false;
                 MainWindow.Closed += MainWindow_Closed;
             }

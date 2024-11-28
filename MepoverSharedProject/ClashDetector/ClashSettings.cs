@@ -9,8 +9,13 @@ namespace ClashDetector
 {
     public class ClashSettings
     {
+        public bool IsCategoriesEnabled { get; set; }
         public ObservableCollection<ListItem> Categories1 { get; set; } = new ObservableCollection<ListItem>();
         public ObservableCollection<ListItem> Categories2 { get; set; } = new ObservableCollection<ListItem>();
+
+        public ObservableCollection<ListItem> RevitModels1 { get; set; } = new ObservableCollection<ListItem>();
+        public ObservableCollection<ListItem> RevitModels2 { get; set; } = new ObservableCollection<ListItem>();
+
         public ClashSettings()
         {
             AddCategories();

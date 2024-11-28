@@ -29,6 +29,7 @@ namespace ClashDetector
                 {
                     revitService = new RevitClashService(uiApp);
                 }
+                revitService.Initialize();
                 if (mainViewModel == null)
                 {
                     mainViewModel = new ClashDetectorViewModel(revitService);
