@@ -4,7 +4,6 @@ using Autodesk.Revit.UI;
 using ClashDetector.Models;
 using ClashDetector.ViewModels;
 using ClashDetectorUI;
-using ClashDetectorUI.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,8 +24,9 @@ namespace ClashDetector
         private NamedPipeServerStream pipeServer;
         private StreamReader reader;
         private StreamWriter writer;
-        private MainWindow mainWindow;
-        private Thread uiThread;
+
+        //RequestHandler handler;
+        //ExternalEvent exEvent;
 
         private Document doc;
         private Options geomOptions = new Options();
@@ -34,6 +34,29 @@ namespace ClashDetector
         public UIApplication UIApp { get; private set; }
         public Dictionary<string, Document> DocumentMap { get; private set; }
         public Dictionary<string, RevitLinkInstance> RevitLinkInstanceMap { get; private set; }
+
+        //private ClashWindow clashWindow;
+        //public ClashWindow ClashWindow
+        //{
+        //    get
+        //    {
+        //        if (clashWindow == null)
+        //        {
+        //            clashWindow = new ClashWindow();
+        //            clashWindow.ViewModel.ResultChanged += OnResultChanged;
+        //        }
+        //        return clashWindow;
+        //    }
+        //}
+
+        private string result;
+        public string Result
+        {
+            get { return result; }
+            set { result = value; }
+        }
+
+
         public RevitClashService(UIApplication uiapp)
         {
             UIApp = uiapp;
@@ -44,88 +67,96 @@ namespace ClashDetector
         {
             PopulateLinkedModels();
             PopulateSettings();
-            StartAndConnectToUI();
+            StartServer();
+            //ClashWindow.Show();
+            //ClashWindow testWindow = new ClashWindow();
+            //testWindow.Show();
 
         }
 
 
+        //private void OnResultChanged(object sender, EventArgs e)
+        //{
+        //    // Handle the Result property change here
+        //    Result = clashWindow.ViewModel.Result;
+        //    if (Result == "Run Clashes")
+        //    {
+        //        List<Clash> clashes = RunClashes();
+        //        clashWindow.ViewModel.Test = "Clashes found: " + clashes.Count;
+        //    }
+        //}
 
-
-        private async void StartAndConnectToUI()
+        #region IPC Window
+        private void StartServer()
         {
-            pipeServer = new NamedPipeServerStream("PipeChat", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous);
+
+            pipeServer = new NamedPipeServerStream("RevitUIConn", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.None);
 
             Process.Start("C:\\Users\\taco\\source\\repos\\MepoverRevit\\RevitClashDetectorUI\\bin\\Debug\\net8.0-windows\\RevitClashDetectorUI.exe");
-            await pipeServer.WaitForConnectionAsync();
 
-            //MessagesTextBox.AppendText("Connected to client.\n");
+            pipeServer.WaitForConnection();
 
             writer = new StreamWriter(pipeServer) { AutoFlush = true };
             reader = new StreamReader(pipeServer);
 
-            ListenForMessages();
+            Thread listenThread = new Thread(ListenForMessages);
+            listenThread.Start();
+
 
         }
 
-        public async void SendMessage(string message)
-        {
-            if (pipeServer != null && pipeServer.IsConnected)
-            {
-                await writer.WriteLineAsync(message);
-            }
-            else
-            {
-                MessageBox.Show("Not connected to client");
-            }
-        }
 
-        private async void ListenForMessages()
+        private void ListenForMessages()
         {
             while (pipeServer.IsConnected)
             {
-                string message = await reader.ReadLineAsync();
-                if (message == "Run Clashes")
-                {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        List<Clash> clashes = RunClashes();
-                        SendMessage(clashes.Count().ToString() + " clashes found");
-                    }
-                    );
-                }
+                string message = reader.ReadLine();
             }
         }
+
+        public void SendMessage(string message)
+        {
+            if (pipeServer != null && pipeServer.IsConnected)
+            {
+                writer.WriteLine(message);
+            }
+            else
+            {
+                MessageBox.Show("Not connected to client.");
+            }
+        }
+        #endregion
 
         #region logic for starting UI as reference dll
 
-        private void StartAndConnectToWindow()
-        {
-            uiThread = new Thread(() =>
-            {
-                mainWindow = new MainWindow();
-                mainWindow.RunFromRevit = true;
-                mainWindow.Closed += (s, e) => System.Windows.Threading.Dispatcher.ExitAllFrames();
-                mainWindow.Show();
-                System.Windows.Threading.Dispatcher.Run();
-            });
+        //private void StartAndConnectToWindow()
+        //{
+        //    uiThread = new Thread(() =>
+        //    {
+        //        mainWindow = new MainWindow();
+        //        mainWindow.RunFromRevit = true;
+        //        mainWindow.Closed += (s, e) => System.Windows.Threading.Dispatcher.ExitAllFrames();
+        //        mainWindow.Show();
+        //        System.Windows.Threading.Dispatcher.Run();
+        //    });
 
-            uiThread.SetApartmentState(ApartmentState.STA);
-            uiThread.Start();
-        }
+        //    uiThread.SetApartmentState(ApartmentState.STA);
+        //    uiThread.Start();
+        //}
 
-        // Method to close the MainWindow
-        public void CloseMainWindow()
-        {
-            if (mainWindow != null)
-            {
-                mainWindow.Dispatcher.Invoke(() =>
-                {
-                    mainWindow.Close();
-                });
+        //// Method to close the MainWindow
+        //public void CloseMainWindow()
+        //{
+        //    if (mainWindow != null)
+        //    {
+        //        mainWindow.Dispatcher.Invoke(() =>
+        //        {
+        //            mainWindow.Close();
+        //        });
 
-                uiThread.Join();
-            }
-        }
+        //        uiThread.Join();
+        //    }
+        //}
 
         #endregion
 
@@ -238,7 +269,7 @@ namespace ClashDetector
                 }
 
             }
-
+            SendMessage(clashes.Count.ToString() + " clashes found");
             return clashes;
 
         }

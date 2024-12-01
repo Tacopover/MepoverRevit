@@ -1,5 +1,4 @@
-﻿using ClashDetectorUI.ViewModels;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,22 +13,16 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace ClashDetectorUI
+namespace ClashDetectorUIHostWPF
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-
     public partial class MainWindow : Window
     {
-        public bool RunFromRevit { get; set; }
-        public MainViewModel ViewModel { get; set; }
         public MainWindow()
         {
             InitializeComponent();
-            ViewModel = new MainViewModel();
-            DataContext = ViewModel;
         }
-
     }
 }

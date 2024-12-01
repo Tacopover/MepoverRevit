@@ -26,36 +26,44 @@ namespace RevitClashDetectorUI
         public MainWindow()
         {
             InitializeComponent();
-            //StartClient();
+            StartClient();
         }
 
-        private async void StartClient()
+        private void StartClient()
         {
-            pipeClient = new NamedPipeClientStream(".", "PipeChat", PipeDirection.InOut, PipeOptions.Asynchronous);
+            pipeClient = new NamedPipeClientStream(".", "RevitUIConn", PipeDirection.InOut, PipeOptions.None);
 
-            await pipeClient.ConnectAsync(1000); // 1 second timeout
+            pipeClient.Connect(1000); // 1 second timeout
             MessagesTextBox.AppendText("Connected to server.\n");
-            reader = new StreamReader(pipeClient);
             writer = new StreamWriter(pipeClient) { AutoFlush = true };
+            reader = new StreamReader(pipeClient);
 
-            ListenForMessages();
+            Thread listenThread = new Thread(ListenForMessages);
+            listenThread.Start();
+
         }
 
-        private async void ListenForMessages()
+        private void ListenForMessages()
         {
             while (pipeClient.IsConnected)
             {
-                string message = await reader.ReadLineAsync();
-                Dispatcher.Invoke(() => MessagesTextBox.AppendText($"Server: {message}\n"));
+                string message = reader.ReadLine();
+                MessagesTextBox.AppendText($"Server: {message}\n");
+                //Dispatcher.Invoke(() => MessagesTextBox.AppendText($"Server: {message}\n"));
             }
         }
 
-        private async void SendMessageButton_Click(object sender, RoutedEventArgs e)
+        private void SendMessageButton_Click(object sender, RoutedEventArgs e)
         {
+            if (pipeClient == null || !pipeClient.IsConnected)
+            {
+                StartClient();
+            }
+
             if (pipeClient != null && pipeClient.IsConnected)
             {
                 string message = MessageTextBox.Text;
-                await writer.WriteLineAsync(message);
+                writer.WriteLine(message);
                 MessagesTextBox.AppendText($"Client: {message}\n");
                 MessageTextBox.Clear();
             }
@@ -65,12 +73,12 @@ namespace RevitClashDetectorUI
             }
         }
 
-        private async void SendCommand(object sender, RoutedEventArgs e)
+        private void SendCommand(object sender, RoutedEventArgs e)
         {
             if (pipeClient != null && pipeClient.IsConnected)
             {
                 string message = "Run Clashes";
-                await writer.WriteLineAsync(message);
+                writer.WriteLine(message);
                 MessagesTextBox.AppendText($"Client: {message}\n");
                 MessageTextBox.Clear();
             }

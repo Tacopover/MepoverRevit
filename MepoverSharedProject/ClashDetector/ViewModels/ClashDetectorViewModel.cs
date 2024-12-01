@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.UI;
 using ClashDetector.Views;
+using ClashDetectorUI;
 using MepoverSharedProject;
 using System;
 using System.Collections.Generic;
@@ -112,6 +113,8 @@ namespace ClashDetector.ViewModels
                 OnPropertyChanged(nameof(MainWindow));
             }
         }
+
+
         #endregion
 
         public RelayCommand<object> NavigateToCommand { get; set; }
