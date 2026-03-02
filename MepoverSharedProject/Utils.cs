@@ -9,8 +9,6 @@ namespace Utilities
 {
     public static class Utils
     {
-
-
         public static System.Windows.Media.Imaging.BitmapImage LoadEmbeddedImage(Assembly assembly, string imagePath)
         {
             var img = new System.Windows.Media.Imaging.BitmapImage();
@@ -29,4 +27,6 @@ namespace Utilities
             return img;
         }
     }
+
+
 }

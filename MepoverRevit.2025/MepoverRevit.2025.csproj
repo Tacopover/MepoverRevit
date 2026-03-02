@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>MepoverRevit._2025</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  	<UseWPF>true</UseWPF>	  
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
+    <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2025.0.0" />
+  </ItemGroup>
+
+  <Import Project="..\MepoverSharedProject\MepoverSharedProject.projitems" Label="Shared" />
+
+</Project>

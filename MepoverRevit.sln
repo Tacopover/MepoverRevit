@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClashDetectorUI", "ClashDet
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClashDetectorUIHostWPF", "ClashDetectorUIHostWPF\ClashDetectorUIHostWPF.csproj", "{CB28AC92-72B7-42EA-B45F-A4AA0407D60E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MepoverRevit.2025", "MepoverRevit.2025\MepoverRevit.2025.csproj", "{43D257AA-D3E7-4F9B-BBC6-1B57749B7290}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,10 @@ Global
 		{CB28AC92-72B7-42EA-B45F-A4AA0407D60E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CB28AC92-72B7-42EA-B45F-A4AA0407D60E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CB28AC92-72B7-42EA-B45F-A4AA0407D60E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43D257AA-D3E7-4F9B-BBC6-1B57749B7290}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43D257AA-D3E7-4F9B-BBC6-1B57749B7290}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43D257AA-D3E7-4F9B-BBC6-1B57749B7290}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43D257AA-D3E7-4F9B-BBC6-1B57749B7290}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +78,7 @@ Global
 		MepoverSharedProject\MepoverSharedProject.projitems*{0062c8e5-ed97-4c6f-ba75-7e42199b10ce}*SharedItemsImports = 4
 		MepoverSharedProject\MepoverSharedProject.projitems*{025f3a33-52f6-49a5-a1a3-eef74808c2b3}*SharedItemsImports = 4
 		MepoverSharedProject\MepoverSharedProject.projitems*{1e905e71-cc78-4977-8124-f9ca093c8cd0}*SharedItemsImports = 4
+		MepoverSharedProject\MepoverSharedProject.projitems*{43d257aa-d3e7-4f9b-bbc6-1b57749b7290}*SharedItemsImports = 5
 		MepoverSharedProject\MepoverSharedProject.projitems*{a064d738-a3a2-4aa7-b519-40846acab097}*SharedItemsImports = 13
 		MepoverSharedProject\MepoverSharedProject.projitems*{e39b487f-ce70-48c4-96ab-619f0f8d9b9a}*SharedItemsImports = 4
 	EndGlobalSection

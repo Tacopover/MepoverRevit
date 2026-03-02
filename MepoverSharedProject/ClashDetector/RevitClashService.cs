@@ -3,14 +3,12 @@ using Autodesk.Revit.DB.Visual;
 using Autodesk.Revit.UI;
 using ClashDetector.Models;
 using ClashDetector.ViewModels;
-using ClashDetectorUI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,9 +22,11 @@ namespace ClashDetector
         private NamedPipeServerStream pipeServer;
         private StreamReader reader;
         private StreamWriter writer;
+        private const int MaxRetries = 5;
+        private const int DelayMilliseconds = 1000;
 
-        //RequestHandler handler;
-        //ExternalEvent exEvent;
+        RequestHandler handler;
+        ExternalEvent exEvent;
 
         private Document doc;
         private Options geomOptions = new Options();
@@ -61,70 +61,136 @@ namespace ClashDetector
         {
             UIApp = uiapp;
             doc = UIApp.ActiveUIDocument.Document;
+            handler = new RequestHandler(this);
+            exEvent = ExternalEvent.Create(handler);
         }
 
         public void Initialize()
         {
             PopulateLinkedModels();
             PopulateSettings();
-            StartServer();
+            //StartServer();
             //ClashWindow.Show();
             //ClashWindow testWindow = new ClashWindow();
             //testWindow.Show();
 
         }
 
-
-        //private void OnResultChanged(object sender, EventArgs e)
-        //{
-        //    // Handle the Result property change here
-        //    Result = clashWindow.ViewModel.Result;
-        //    if (Result == "Run Clashes")
-        //    {
-        //        List<Clash> clashes = RunClashes();
-        //        clashWindow.ViewModel.Test = "Clashes found: " + clashes.Count;
-        //    }
-        //}
-
         #region IPC Window
-        private void StartServer()
+        private async void StartServer()
         {
+            int retries = 0;
+            bool pipeCreated = false;
 
-            pipeServer = new NamedPipeServerStream("RevitUIConn", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.None);
-
-            Process.Start("C:\\Users\\taco\\source\\repos\\MepoverRevit\\RevitClashDetectorUI\\bin\\Debug\\net8.0-windows\\RevitClashDetectorUI.exe");
-
-            pipeServer.WaitForConnection();
-
-            writer = new StreamWriter(pipeServer) { AutoFlush = true };
-            reader = new StreamReader(pipeServer);
-
-            Thread listenThread = new Thread(ListenForMessages);
-            listenThread.Start();
-
-
-        }
-
-
-        private void ListenForMessages()
-        {
-            while (pipeServer.IsConnected)
+            while (retries < MaxRetries && !pipeCreated)
             {
-                string message = reader.ReadLine();
+                try
+                {
+                    if (NamedPipeHelper.IsPipeBusy("RevitChat"))
+                    {
+                        NamedPipeHelper.TerminatePipe("RevitChat");
+                    }
+
+                    ClosePipe();
+
+                    if (pipeServer == null || !pipeServer.IsConnected)
+                    {
+                        pipeServer = new NamedPipeServerStream("RevitChat", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous);
+                    }
+                    pipeCreated = true;
+
+
+                    string processName = "RevitClashDetectorUI"; // Name of the process to check
+                    var existingProcesses = System.Diagnostics.Process.GetProcessesByName(processName);
+
+                    if (existingProcesses.Length == 0)
+                    {
+                        Process.Start("C:\\Users\\taco\\source\\repos\\MepoverRevit\\RevitClashDetectorUI\\bin\\Debug\\net8.0-windows\\RevitClashDetectorUI.exe");
+                    }
+
+                    await pipeServer.WaitForConnectionAsync();
+
+                    //MessagesTextBox.AppendText("Connected to client.\n");
+
+                    writer = new StreamWriter(pipeServer) { AutoFlush = true };
+                    reader = new StreamReader(pipeServer);
+
+                    ListenForMessages();
+
+                }
+                catch (IOException ex) when (ex.Message.Contains("All pipe instances are busy"))
+                {
+                    retries++;
+                    Console.WriteLine($"Pipe is busy. Retrying {retries}/{MaxRetries}...");
+                    Thread.Sleep(DelayMilliseconds);
+                }
             }
+
+            if (!pipeCreated)
+            {
+                Console.WriteLine("Failed to create named pipe server after multiple attempts.");
+            }
+
+
         }
 
-        public void SendMessage(string message)
+        public async void SendMessage(string message)
         {
             if (pipeServer != null && pipeServer.IsConnected)
             {
-                writer.WriteLine(message);
+                await writer.WriteLineAsync(message);
             }
             else
             {
-                MessageBox.Show("Not connected to client.");
+                MessageBox.Show("Not connected to client");
             }
         }
+
+        private async void ListenForMessages()
+        {
+            while (pipeServer.IsConnected)
+            {
+                string message = await reader.ReadLineAsync();
+                if (message == "Run Clashes")
+                {
+                    //Application.Current.Dispatcher.Invoke(() =>
+                    //{
+                    //    MakeRequest(RequestId.RunRevitAction);
+                    //}
+                    //);
+                    MakeRequest(RequestId.RunRevitClashes);
+                }
+            }
+        }
+
+        public void ClosePipe()
+        {
+
+            // Dispose of the pipeClient and other resources
+            if (pipeServer != null)
+            {
+                if (pipeServer.IsConnected)
+                {
+                    pipeServer.WaitForPipeDrain();
+                }
+                pipeServer.Dispose();
+                pipeServer = null;
+            }
+
+            if (reader != null)
+            {
+                reader.Dispose();
+                reader = null;
+            }
+
+            if (writer != null)
+            {
+                writer.Dispose();
+                writer = null;
+            }
+
+        }
+
         #endregion
 
         #region logic for starting UI as reference dll
@@ -540,5 +606,10 @@ namespace ClashDetector
 
         }
 
+        public void MakeRequest(RequestId request)
+        {
+            handler.Request.Make(request);
+            exEvent.Raise();
+        }
     }
 }

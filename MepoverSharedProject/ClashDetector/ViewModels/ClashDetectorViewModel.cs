@@ -1,6 +1,5 @@
 ﻿using Autodesk.Revit.UI;
 using ClashDetector.Views;
-using ClashDetectorUI;
 using MepoverSharedProject;
 using System;
 using System.Collections.Generic;
@@ -156,7 +155,8 @@ namespace ClashDetector.ViewModels
 
         private void RunClashes()
         {
-            revitService.RunClashes();
+            //revitService.RunClashes();
+            revitService.MakeRequest(RequestId.RunRevitClashes);
         }
 
         public void ShowMainWindow()
@@ -182,6 +182,7 @@ namespace ClashDetector.ViewModels
             //exEvent.Dispose();
             //exEvent = null;
             //handler = null;
+            revitService.ClosePipe();
             IsWindowClosed = true;
             MainWindow.Closed -= MainWindow_Closed;
         }
