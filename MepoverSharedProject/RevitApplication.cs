@@ -31,6 +31,15 @@ namespace MepoverSharedProject
             Icon = Utils.LoadEmbeddedImage(assembly, "SheetCopier.png");
             CCbutton.LargeImage = Icon;
 
+            // IFC Export button
+            PushButtonData ifcData = new PushButtonData(
+                "IFCExport",
+                "IFC\nExport",
+                thisAssemblyPath,
+                "IfcExport.IfcExportCommand");
+            PushButton ifcButton = ribbonPanel.AddItem(ifcData) as PushButton;
+            ifcButton.ToolTip = "Start incremental IFC export during idle time";
+
         }
         public Result OnStartup(UIControlledApplication application)
         {

@@ -74,7 +74,48 @@
     <PackageReference Include="Revit_All_Main_Versions_API_x64" PrivateAssets="all" ExcludeAssets="runtime">
       <Version>2021.1.4</Version>
     </PackageReference>
+    <PackageReference Include="Xbim.Essentials">
+      <Version>6.0.489</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="MepoverRevit.addin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="..\MepoverSharedProject\MepoverSharedProject.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>echo Copying results to 2021...
+if not exist "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover" mkdir "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover"
+
+rem Copy the main addin file
+xcopy /Q/Y "$(TargetDir)MepoverRevit.addin" "%25AppData%25\Autodesk\Revit\Addins\2021"
+
+rem Copy all DLL files including NuGet dependencies
+xcopy /Q/Y "$(TargetDir)*.dll" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover"
+
+rem Copy all executable files
+xcopy /Q/Y "$(TargetDir)*.exe" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover"
+
+rem Copy configuration files (JSON, XML, etc.)
+xcopy /Q/Y "$(TargetDir)*.json" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover"
+xcopy /Q/Y "$(TargetDir)*.xml" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover"
+xcopy /Q/Y "$(TargetDir)*.config" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover"
+
+rem Copy runtime dependencies (if they exist)
+if exist "$(TargetDir)runtimes" (
+    xcopy /S /I /Q /Y "$(TargetDir)runtimes" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover\runtimes"
+)
+
+rem Copy any other assets (RFA files, etc.)
+xcopy /Q/Y "$(TargetDir)*.rfa" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover"
+
+rem Copy the Resources folder
+if exist "$(TargetDir)Resources" (
+    xcopy /S /I /Q /Y "$(TargetDir)Resources" "%25AppData%25\Autodesk\Revit\Addins\2021\Mepover\Resources"
+)
+
+echo Installation complete for Revit 2021</PostBuildEvent>
+  </PropertyGroup>
 </Project>

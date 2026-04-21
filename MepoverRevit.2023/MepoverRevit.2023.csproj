@@ -74,6 +74,9 @@
       <Version>2023.0.0</Version>
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Xbim.Essentials">
+      <Version>6.0.489</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="..\MepoverSharedProject\MepoverSharedProject.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

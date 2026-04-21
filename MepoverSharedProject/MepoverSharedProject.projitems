@@ -11,6 +11,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcElementWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportRequestHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSession.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleExportOrchestrator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml.cs">
+      <DependentUpon>IfcExportDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashDetectorCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\Clash.cs" />
@@ -35,6 +45,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\WorksetsControl.xaml.cs">
       <DependentUpon>WorksetsControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcProjectInitializer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcQuickExporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RelayCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RevitApplication.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\DataGridColumnTPO.cs" />
@@ -60,6 +72,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\CategoriesControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
