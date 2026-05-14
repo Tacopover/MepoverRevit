@@ -5,7 +5,8 @@
     <RootNamespace>MepoverRevit._2025</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	  	<UseWPF>true</UseWPF>	  
+	  	<UseWPF>true</UseWPF>
+	  	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,13 +22,13 @@
   <ItemGroup>
     <PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
     <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="2025.0.0" />
-    <PackageReference Include="Xbim.Essentials" Version="6.0.461" />
+    <PackageReference Include="Xbim.Essentials" Version="6.0.489" />
   </ItemGroup>
 
   <Import Project="..\MepoverSharedProject\MepoverSharedProject.projitems" Label="Shared" />
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo Copying results to 2025...&#xD;&#xA;if not exist &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot; mkdir &quot;%25AppData%25\Autodesk\Revit\Addins\2021\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy the main addin file&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)MepoverRevit.addin&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025&quot;&#xD;&#xA;&#xD;&#xA;rem Copy all DLL files including NuGet dependencies&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.dll&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy all executable files&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.exe&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy configuration files (JSON, XML, etc.)&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.json&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.xml&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.config&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy runtime dependencies (if they exist)&#xD;&#xA;if exist &quot;$(TargetDir)runtimes&quot; (&#xD;&#xA;    xcopy /S /I /Q /Y &quot;$(TargetDir)runtimes&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover\runtimes&quot;&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;rem Copy any other assets (RFA files, etc.)&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.rfa&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy the Resources folder&#xD;&#xA;if exist &quot;$(TargetDir)Resources&quot; (&#xD;&#xA;    xcopy /S /I /Q /Y &quot;$(TargetDir)Resources&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover\Resources&quot;&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;echo Installation complete for Revit 2025" />
+    <Exec Command="echo Copying results to 2025...&#xD;&#xA;if not exist &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot; mkdir &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy the main addin file&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)MepoverRevit.addin&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025&quot;&#xD;&#xA;&#xD;&#xA;rem Copy all DLL files including NuGet dependencies&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.dll&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy all executable files&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.exe&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy configuration files (JSON, XML, etc.)&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.json&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.xml&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.config&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy runtime dependencies (if they exist)&#xD;&#xA;if exist &quot;$(TargetDir)runtimes&quot; (&#xD;&#xA;    xcopy /S /I /Q /Y &quot;$(TargetDir)runtimes&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover\runtimes&quot;&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;rem Copy any other assets (RFA files, etc.)&#xD;&#xA;xcopy /Q/Y &quot;$(TargetDir)*.rfa&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover&quot;&#xD;&#xA;&#xD;&#xA;rem Copy the Resources folder&#xD;&#xA;if exist &quot;$(TargetDir)Resources&quot; (&#xD;&#xA;    xcopy /S /I /Q /Y &quot;$(TargetDir)Resources&quot; &quot;%25AppData%25\Autodesk\Revit\Addins\2025\Mepover\Resources&quot;&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;echo Installation complete for Revit 2025" />
   </Target>
 
 </Project>
