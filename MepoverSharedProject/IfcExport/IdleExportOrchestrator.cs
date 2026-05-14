@@ -1,4 +1,5 @@
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using System;
@@ -41,6 +42,9 @@ namespace IfcExport
         // Save cadence (seconds between periodic disk saves)
         private const int SaveIntervalSeconds = 5;
 
+        // Quiet period: skip processing for this many seconds after a DocumentChanged event.
+        private const double QuietPeriodSeconds = 2.0;
+
         public ExportState State => _state;
 
         /// <summary>Surfaces an error message in the ViewModel's status text.</summary>
@@ -74,6 +78,7 @@ namespace IfcExport
 
             _state = ExportState.Running;
             _uiApp.Idling += OnIdling;
+            SubscribeDocumentChanged();
             _viewModel.OnOrchestratorStateChanged();
         }
 
@@ -100,6 +105,7 @@ namespace IfcExport
                 _state = ExportState.Cancelled;
                 _tasks.Clear();
                 _uiApp.Idling -= OnIdling;
+                UnsubscribeDocumentChanged();
                 _session?.Dispose();
                 _session = null;
                 _viewModel.OnOrchestratorStateChanged();
@@ -151,23 +157,31 @@ namespace IfcExport
             // Remove completed tasks.
             _tasks.RemoveAll(t => t.Completed);
 
-            // Transition to Completed when nothing remains.
-            // Enqueue a final save followed by a completion task so the last elements
-            // are guaranteed to reach disk before the session is disposed.
-            if (_tasks.Count == 0 && _state == ExportState.Running
-                && _session != null && _session.TotalElements > 0
-                && _session.ElementQueue.Count == 0)
+            // Transition handling when all tasks have drained.
+            if (_tasks.Count == 0 && _state == ExportState.Running && _session != null)
             {
-                EnqueueSaveTask();
-                _tasks.Add(new IdleTask(_ =>
+                bool initialDone = _session.TotalElements > 0
+                                && _session.ElementQueue.Count == 0;
+
+                if (initialDone && !_session.InitialExportComplete)
                 {
-                    _state = ExportState.Completed;
-                    _uiApp.Idling -= OnIdling;
-                    _session.Dispose();
-                    _session = null;
-                    _viewModel.OnOrchestratorStateChanged();
-                    return true;
-                }));
+                    // Initial full export finished — do a final save and enter monitoring mode.
+                    _session.InitialExportComplete = true;
+                    EnqueueSaveTask();
+                    _tasks.Add(new IdleTask(_ =>
+                    {
+                        _viewModel.StatusText      = "Monitoring for changes\u2026";
+                        _viewModel.PendingChanges  = 0;
+                        return true;
+                    }));
+                }
+                else if (_session.InitialExportComplete
+                      && _session.PendingChangeQueue.Count > 0
+                      && _session.RevitDocument != null)
+                {
+                    // Pending changes arrived while idle — restart the drain pump.
+                    EnqueueDrainTask(_session.RevitDocument);
+                }
             }
         }
 
@@ -191,6 +205,9 @@ namespace IfcExport
         {
             _tasks.Add(new IdleTask(uiApp =>
             {
+                // Cache the document reference for the DocumentChanged handler and drain tasks.
+                _session.RevitDocument = doc;
+
                 // Collect all view-independent element instances (geometry filter applied
                 // per element in IfcElementWriter to avoid category whitelist maintenance).
                 var collector = new FilteredElementCollector(doc)
@@ -212,41 +229,59 @@ namespace IfcExport
 
         private void EnqueueDrainTask(Document doc)
         {
-            _tasks.Add(new IdleTask(uiApp =>
-            {
-                if (_session == null || _session.ElementQueue.Count == 0)
-                    return true;
-
-                ElementId id = _session.ElementQueue.Dequeue();
-                Element elem = doc.GetElement(id);
-
-                if (elem != null)
+            _tasks.Add(new IdleTask(
+                callback: uiApp =>
                 {
-                    // Phase 2: IfcElementWriter.WriteElement fills in the IFC geometry.
-                    IfcElementWriter.WriteElement(elem, _session);
-                    _session.ExportedElements++;
+                    if (_session == null) return true;
 
-                    _viewModel.ProgressValue = _session.ExportedElements;
-                    _viewModel.StatusText = string.Format(
-                        "Exporting element {0} of {1} \u2014 {2}",
-                        _session.ExportedElements,
-                        _session.TotalElements,
-                        elem.Name ?? string.Empty);
-                }
+                    bool moreWork;
 
-                // Periodic disk save.
-                if ((DateTime.UtcNow - _session.LastSaveUtc).TotalSeconds >= SaveIntervalSeconds)
-                {
-                    EnqueueSaveTask();
-                    _session.LastSaveUtc = DateTime.UtcNow;
-                }
+                    if (_session.PendingChangeQueue.Count > 0)
+                    {
+                        // Priority: process one pending change before the initial export queue.
+                        PendingChange change = _session.PendingChangeQueue.Dequeue();
+                        ProcessPendingChange(change, doc);
+                        _viewModel.PendingChanges = _session.PendingChangeQueue.Count;
+                        moreWork = (_session.PendingChangeQueue.Count > 0
+                                 || _session.ElementQueue.Count > 0);
+                    }
+                    else if (_session.ElementQueue.Count > 0)
+                    {
+                        ElementId id = _session.ElementQueue.Dequeue();
+                        Element elem = doc.GetElement(id);
+                        if (elem != null)
+                        {
+                            IfcElementWriter.WriteElement(elem, _session);
+                            _session.ExportedElements++;
+                            _viewModel.ProgressValue = _session.ExportedElements;
+                            _viewModel.StatusText = string.Format(
+                                "Exporting element {0} of {1} \u2014 {2}",
+                                _session.ExportedElements,
+                                _session.TotalElements,
+                                elem.Name ?? string.Empty);
+                        }
+                        moreWork = (_session.ElementQueue.Count > 0
+                                 || _session.PendingChangeQueue.Count > 0);
+                    }
+                    else
+                    {
+                        return true; // Nothing to do — task complete.
+                    }
 
-                // Re-enqueue self for the next element next tick.
-                if (_session.ElementQueue.Count > 0)
-                    EnqueueDrainTask(doc);
+                    // Periodic disk save.
+                    if ((DateTime.UtcNow - _session.LastSaveUtc).TotalSeconds >= SaveIntervalSeconds)
+                    {
+                        EnqueueSaveTask();
+                        _session.LastSaveUtc = DateTime.UtcNow;
+                    }
 
-                return true; // this drain-task instance is complete
-            }));
+                    if (moreWork)
+                        EnqueueDrainTask(doc);
+
+                    return true; // This drain-task instance is complete.
+                },
+                readyCheck: IsReadyToProcess
+            ));
         }
 
         private void EnqueueSaveTask()
@@ -293,6 +328,216 @@ namespace IfcExport
             foreach (char c in System.IO.Path.GetInvalidFileNameChars())
                 name = name.Replace(c, '_');
             return name;
+        }
+
+        // ------------------------------------------------------------------ Phase 3 — change tracking
+
+        private void SubscribeDocumentChanged()
+        {
+            _uiApp.Application.DocumentChanged += OnDocumentChanged;
+        }
+
+        private void UnsubscribeDocumentChanged()
+        {
+            _uiApp.Application.DocumentChanged -= OnDocumentChanged;
+        }
+
+        /// <summary>
+        /// Fires on the Revit main thread whenever the active document changes.
+        /// Queues <see cref="PendingChange"/> entries for processing in subsequent idle ticks.
+        /// Deleted entries resolve their UniqueId here from <see cref="IfcExportSession.ElementIdIndex"/>
+        /// before the element is gone from the document.
+        /// </summary>
+        private void OnDocumentChanged(object sender, DocumentChangedEventArgs e)
+        {
+            if (_session == null || _state != ExportState.Running) return;
+
+            // Always reset the quiet-period clock.
+            _session.LastDocumentChangedUtc = DateTime.UtcNow;
+
+            // Wait until the collect task has run and stored the document reference.
+            if (_session.RevitDocument == null) return;
+
+            // Ignore events for other documents (e.g. linked files).
+            Document changedDoc = e.GetDocument();
+            if (changedDoc.Title != _session.RevitDocument.Title) return;
+
+            // Deleted — resolve UniqueId now while the index still holds the entry.
+            foreach (ElementId id in e.GetDeletedElementIds())
+            {
+                if (_session.ElementIdIndex.TryGetValue(id, out string uniqueId))
+                {
+                    _session.PendingChangeQueue.Enqueue(
+                        new PendingChange(ChangeType.Deleted, id, uniqueId));
+                    _session.ElementIdIndex.Remove(id);
+                }
+            }
+
+            // Modified — expand directly-reported elements to include connected/joined neighbours,
+            // then deduplicate so the same element is never queued twice.
+            var directlyModified = new HashSet<ElementId>(e.GetModifiedElementIds());
+            var allModified = new HashSet<ElementId>(directlyModified);
+            foreach (ElementId id in directlyModified)
+            {
+                Element elem = changedDoc.GetElement(id);
+                if (elem == null) continue;
+                foreach (ElementId related in GetRelatedElementIds(changedDoc, elem))
+                    allModified.Add(related);
+            }
+
+            foreach (ElementId id in allModified)
+            {
+                if (!_session.ElementIdIndex.ContainsKey(id)) continue;
+                if (_session.PendingModifiedIds.Contains(id)) continue;
+                _session.PendingChangeQueue.Enqueue(new PendingChange(ChangeType.Modified, id));
+                _session.PendingModifiedIds.Add(id);
+            }
+
+            // Added — only elements not already in the session.
+            foreach (ElementId id in e.GetAddedElementIds())
+            {
+                if (!_session.ElementIdIndex.ContainsKey(id))
+                    _session.PendingChangeQueue.Enqueue(
+                        new PendingChange(ChangeType.Added, id));
+            }
+
+            _viewModel.PendingChanges = _session.PendingChangeQueue.Count;
+        }
+
+        /// <summary>
+        /// Returns ElementIds of elements structurally or network-connected to <paramref name="elem"/>
+        /// that may have moved as a side-effect of modifying <paramref name="elem"/>.
+        /// Covers: geometry-joined elements (walls etc.) and MEP connector networks
+        /// (pipes, ducts, cable trays, conduits, fittings, equipment).
+        /// </summary>
+        private static IEnumerable<ElementId> GetRelatedElementIds(Document doc, Element elem)
+        {
+            var result = new List<ElementId>();
+
+            // Geometry-joined elements (walls joined to walls, beams, slabs, etc.)
+            try
+            {
+                foreach (ElementId id in JoinGeometryUtils.GetJoinedElements(doc, elem))
+                    result.Add(id);
+            }
+            catch { }
+
+            // MEP connector network — pipes, ducts, cable trays, conduits
+            ConnectorManager cm = null;
+            if (elem is MEPCurve mepCurve)
+                cm = mepCurve.ConnectorManager;
+            else if (elem is FamilyInstance fi && fi.MEPModel != null)
+                cm = fi.MEPModel.ConnectorManager;
+
+            if (cm != null)
+            {
+                foreach (Connector connector in cm.Connectors)
+                {
+                    try
+                    {
+                        foreach (Connector reference in connector.AllRefs)
+                        {
+                            Element owner = reference.Owner;
+                            if (owner != null && owner.Id != elem.Id)
+                                result.Add(owner.Id);
+                        }
+                    }
+                    catch { }
+                }
+            }
+
+            // Hosted/dependent elements: doors in walls, windows, fixtures in ceilings,
+            // pipe accessories, etc. Safety net for side-effect moves Revit may not
+            // explicitly report in GetModifiedElementIds.
+            try
+            {
+                foreach (ElementId depId in elem.GetDependentElements(null))
+                {
+                    Element dep = doc.GetElement(depId);
+                    if (dep == null) continue;
+                    if (dep.ViewSpecific) continue;   // skip tags, annotations, dimensions
+                    if (dep is ElementType) continue; // skip element type catalog entries
+                    result.Add(depId);
+                }
+            }
+            catch { }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns true when it is safe to process elements — i.e., no <c>DocumentChanged</c>
+        /// event has fired within the last <see cref="QuietPeriodSeconds"/> seconds.
+        /// </summary>
+        private bool IsReadyToProcess()
+        {
+            if (_session == null) return true;
+            if (_session.LastDocumentChangedUtc == DateTime.MinValue) return true;
+            return (DateTime.UtcNow - _session.LastDocumentChangedUtc).TotalSeconds >= QuietPeriodSeconds;
+        }
+
+        private void ProcessPendingChange(PendingChange change, Document doc)
+        {
+            try
+            {
+                switch (change.Type)
+                {
+                    case ChangeType.Added:    ProcessAdded(change.ElementId, doc);  break;
+                    case ChangeType.Modified: ProcessModified(change.ElementId, doc); break;
+                    case ChangeType.Deleted:  ProcessDeleted(change.UniqueId);        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    string.Format("ProcessPendingChange failed ({0} {1}): {2}",
+                        change.Type, change.ElementId, ex.Message));
+            }
+        }
+
+        private void ProcessAdded(ElementId id, Document doc)
+        {
+            // Skip if the element was somehow already exported.
+            if (_session.ElementIdIndex.ContainsKey(id)) return;
+
+            Element elem = doc.GetElement(id);
+            if (elem == null) return;
+
+            IfcElementWriter.WriteElement(elem, _session);
+            _viewModel.StatusText = string.Format("Added: {0}", elem.Name ?? id.ToString());
+        }
+
+        private void ProcessModified(ElementId id, Document doc)
+        {
+            // Release the dedup slot so this element can be re-queued if modified again later.
+            _session.PendingModifiedIds.Remove(id);
+
+            if (!_session.ElementIdIndex.TryGetValue(id, out string uniqueId)) return;
+            if (!_session.ExportStateMap.TryGetValue(uniqueId, out string ifcGuid)) return;
+
+            // Remove old IFC entity and clean up maps.
+            IfcElementWriter.RemoveElement(ifcGuid, _session);
+            _session.ExportStateMap.Remove(uniqueId);
+            _session.ElementIdIndex.Remove(id);
+
+            // Re-export with the current geometry.
+            Element elem = doc.GetElement(id);
+            if (elem == null) return;
+
+            IfcElementWriter.WriteElement(elem, _session);
+            _viewModel.StatusText = string.Format("Updated: {0}", elem.Name ?? id.ToString());
+        }
+
+        private void ProcessDeleted(string uniqueId)
+        {
+            if (string.IsNullOrEmpty(uniqueId)) return;
+            if (!_session.ExportStateMap.TryGetValue(uniqueId, out string ifcGuid)) return;
+
+            IfcElementWriter.RemoveElement(ifcGuid, _session);
+            _session.ExportStateMap.Remove(uniqueId);
+            // ElementIdIndex entry was already removed in OnDocumentChanged.
+
+            _viewModel.StatusText = string.Format("Deleted element (uid: {0})", uniqueId);
         }
     }
 }
