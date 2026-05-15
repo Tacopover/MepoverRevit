@@ -53,8 +53,36 @@ namespace IfcExport
         public IfcBuildingStorey FallbackStorey { get; set; }
 
         // ------------------------------------------------------------------ settings
-        public string DestinationFolder { get; set; }
-        public string IfcVersion        { get; set; }
+        public string DestinationFolder  { get; set; }
+        public string IfcVersion         { get; set; }
+        public List<PsetMappingBlock> PsetMappings { get; set; } = new List<PsetMappingBlock>();
+
+        // ------------------------------------------------------------------ change tracking (Phase 3)
+
+        /// <summary>
+        /// Changes queued by <c>DocumentChanged</c> for deferred processing.
+        /// Pending changes are drained with priority over the initial export queue.
+        /// </summary>
+        public Queue<PendingChange> PendingChangeQueue { get; } = new Queue<PendingChange>();
+
+        /// <summary>
+        /// ElementIds currently in <see cref="PendingChangeQueue"/> as Modified changes.
+        /// Used to skip re-queuing the same element (e.g. direct + indirect modification in one event).
+        /// Entries are removed when the corresponding Modified change is processed.
+        /// </summary>
+        public HashSet<ElementId> PendingModifiedIds { get; } = new HashSet<ElementId>();
+
+        /// <summary>UTC timestamp of the last <c>DocumentChanged</c> event; used for the 2-second quiet period.</summary>
+        public DateTime LastDocumentChangedUtc { get; set; } = DateTime.MinValue;
+
+        /// <summary>
+        /// Cached Revit document reference � set once the Collect task runs so the
+        /// <c>DocumentChanged</c> handler and drain tasks do not need a UIApplication parameter.
+        /// </summary>
+        public Document RevitDocument { get; set; }
+
+        /// <summary>True once the initial full element queue has been completely drained.</summary>
+        public bool InitialExportComplete { get; set; }
 
         // ------------------------------------------------------------------ timing
         public DateTime LastSaveUtc   { get; set; } = DateTime.UtcNow;

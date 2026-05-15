@@ -43,6 +43,11 @@ namespace MepoverSharedProject
         }
         public Result OnStartup(UIControlledApplication application)
         {
+#if REVIT2025
+            // .NET 8 does not automatically search the plugin directory for dependent assemblies.
+            // Register a resolver so Xbim and other NuGet deps are found next to the plugin DLL.
+            AppDomain.CurrentDomain.AssemblyResolve += ResolvePluginAssembly;
+#endif
             try
             {
                 AddRibbonPanel(application);
@@ -59,6 +64,16 @@ namespace MepoverSharedProject
         {
             return Result.Succeeded;
         }
+
+#if REVIT2025
+        private static Assembly ResolvePluginAssembly(object sender, ResolveEventArgs args)
+        {
+            string pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string assemblyName = new AssemblyName(args.Name).Name;
+            string dllPath = Path.Combine(pluginDir, assemblyName + ".dll");
+            return File.Exists(dllPath) ? Assembly.LoadFrom(dllPath) : null;
+        }
+#endif
 
     }
 }

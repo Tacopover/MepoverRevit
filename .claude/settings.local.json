@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path . -Recurse -Depth 2 -Force)",
+      "Bash(Select-Object -Property FullName)",
+      "Bash(git config *)",
+      "Bash(dotnet --version)",
+      "mcp__semble__search",
+      "Bash(dotnet build *)",
+      "Bash(ls -la \"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\\" | head -30)",
+      "Read(//c/Users/taco/source/repos/**)",
+      "PowerShell(head -30)",
+      "Bash(dir \"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverRevit.2025\")",
+      "Skill(superpowers:subagent-driven-development)",
+      "Skill(superpowers:subagent-driven-development:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(dir \"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverRevit.2025\\\\bin\\\\Debug\\\\net8.0-windows\\\\Xbim*.dll\")",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Autodesk\\\\Revit\\\\Addins\\\\2025\\\\Mepover\\\\\" | Select-Object Name | Format-Table -AutoSize)",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "Skill(superpowers:finishing-a-development-branch:*)",
+      "Bash(gh pr create --title 'fix\\(ifc-export\\): hosted element discovery + Xbim .NET 8 assembly loading' --body ' *)",
+      "Skill(context7-mcp)",
+      "Skill(context7-mcp:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Read(//c/Users/taco/Documents/**)"
+    ]
+  }
+}

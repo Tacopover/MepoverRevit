@@ -54,6 +54,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="32"/>
                         <RowDefinition Height="32"/>
+                        <RowDefinition Height="32"/>
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="IFC Version:" VerticalAlignment="Center" Margin="5,0"/>
@@ -68,6 +69,13 @@
                              VerticalAlignment="Center" Margin="5,3"/>
                     <Button Grid.Row="1" Grid.Column="2" Content="Browse…" Margin="5,3"
                             Command="{Binding BrowseCommand}" Style="{StaticResource FlatButton}"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Pset file:" VerticalAlignment="Center" Margin="5,0"/>
+                    <TextBox Grid.Row="2" Grid.Column="1"
+                             Text="{Binding PsetMappingFilePath, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalAlignment="Center" Margin="5,3" IsReadOnly="True"/>
+                    <Button Grid.Row="2" Grid.Column="2" Content="Browse…" Margin="5,3"
+                            Command="{Binding BrowsePsetCommand}" Style="{StaticResource FlatButton}"/>
                 </Grid>
             </GroupBox>
 

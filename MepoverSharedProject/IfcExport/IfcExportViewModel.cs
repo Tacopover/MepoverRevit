@@ -39,6 +39,13 @@ namespace IfcExport
 
         public string[] IfcVersions { get; } = { "IFC2x3", "IFC4", "IFC4.3" };
 
+        private string _psetMappingFilePath = string.Empty;
+        public string PsetMappingFilePath
+        {
+            get { return _psetMappingFilePath; }
+            set { _psetMappingFilePath = value; OnPropertyChanged(nameof(PsetMappingFilePath)); }
+        }
+
         #endregion
 
         #region Progress
@@ -79,6 +86,7 @@ namespace IfcExport
         public RelayCommand<object> PauseCommand { get; }
         public RelayCommand<object> CancelCommand { get; }
         public RelayCommand<object> BrowseCommand { get; }
+        public RelayCommand<object> BrowsePsetCommand { get; }
         public RelayCommand<object> QuickExportCommand { get; }
 
         #endregion
@@ -92,6 +100,7 @@ namespace IfcExport
             PauseCommand = new RelayCommand<object>(p => CanPause(), p => OnPause());
             CancelCommand = new RelayCommand<object>(p => CanCancel(), p => OnCancel());
             BrowseCommand = new RelayCommand<object>(p => true, p => OnBrowse());
+            BrowsePsetCommand = new RelayCommand<object>(p => true, p => OnBrowsePset());
             QuickExportCommand = new RelayCommand<object>(p => true, p => OnQuickExport());
         }
 
@@ -183,6 +192,18 @@ namespace IfcExport
             };
             _handler.Request(IfcExportRequest.QuickExport);
             _externalEvent.Raise();
+        }
+
+        private void OnBrowsePset()
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Select custom property set mapping file",
+                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                CheckFileExists = true
+            };
+            if (dlg.ShowDialog() == true)
+                PsetMappingFilePath = dlg.FileName;
         }
 
         /// <summary>

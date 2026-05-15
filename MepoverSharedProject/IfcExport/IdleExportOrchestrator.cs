@@ -38,6 +38,7 @@ namespace IfcExport
 
         // Task pump
         private readonly List<IdleTask> _tasks = new List<IdleTask>();
+        private bool _needsRegenerate = false;
 
         // Save cadence (seconds between periodic disk saves)
         private const int SaveIntervalSeconds = 5;
@@ -69,7 +70,8 @@ namespace IfcExport
             _session = new IfcExportSession
             {
                 DestinationFolder = _viewModel.DestinationFolder,
-                IfcVersion = _viewModel.SelectedIfcVersion
+                IfcVersion        = _viewModel.SelectedIfcVersion,
+                PsetMappings      = PsetMappingParser.Parse(_viewModel.PsetMappingFilePath)
             };
 
             // Enqueue the initialisation task — all actual work starts in OnIdling
@@ -179,8 +181,8 @@ namespace IfcExport
                       && _session.PendingChangeQueue.Count > 0
                       && _session.RevitDocument != null)
                 {
-                    // Pending changes arrived while idle — restart the drain pump.
-                    EnqueueDrainTask(_session.RevitDocument);
+                    // Pending changes arrived while idle — regenerate geometry then drain.
+                    EnqueueRegenerateTask(_session.RevitDocument);
                 }
             }
         }
@@ -225,6 +227,25 @@ namespace IfcExport
                 EnqueueDrainTask(doc);
                 return true;
             }));
+        }
+
+        private void EnqueueRegenerateTask(Document doc)
+        {
+            _tasks.Add(new IdleTask(
+                callback: uiApp =>
+                {
+                    _needsRegenerate = false;
+                    using (var tx = new Transaction(doc, "Regenerate"))
+                    {
+                        tx.Start();
+                        doc.Regenerate();
+                        tx.Commit();
+                    }
+                    EnqueueDrainTask(doc);
+                    return true;
+                },
+                readyCheck: IsReadyToProcess
+            ));
         }
 
         private void EnqueueDrainTask(Document doc)
@@ -276,7 +297,12 @@ namespace IfcExport
                     }
 
                     if (moreWork)
-                        EnqueueDrainTask(doc);
+                    {
+                        if (_needsRegenerate && _session.PendingChangeQueue.Count > 0)
+                            EnqueueRegenerateTask(doc);
+                        else
+                            EnqueueDrainTask(doc);
+                    }
 
                     return true; // This drain-task instance is complete.
                 },
@@ -352,8 +378,9 @@ namespace IfcExport
         {
             if (_session == null || _state != ExportState.Running) return;
 
-            // Always reset the quiet-period clock.
+            // Always reset the quiet-period clock and flag geometry as stale.
             _session.LastDocumentChangedUtc = DateTime.UtcNow;
+            _needsRegenerate = true;
 
             // Wait until the collect task has run and stored the document reference.
             if (_session.RevitDocument == null) return;

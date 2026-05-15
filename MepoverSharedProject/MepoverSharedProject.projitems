@@ -47,6 +47,8 @@
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcProjectInitializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcQuickExporter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PendingChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PsetMappingParser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RelayCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RevitApplication.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\DataGridColumnTPO.cs" />
