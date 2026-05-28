@@ -2,14 +2,10 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using ClashDetector.ViewModels;
+using ClashDetector.Views;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using UIFramework;
+using System.Windows.Interop;
 
 namespace ClashDetector
 {
@@ -17,42 +13,34 @@ namespace ClashDetector
     [RegenerationAttribute(RegenerationOption.Manual)]
     public class ClashDetectorCommand : IExternalCommand
     {
-        private ClashDetectorViewModel mainViewModel;
-        private RevitClashService revitService;
-        public static IntPtr WindowHandle;
+        private static ClashDetectorWindow _window;
+        private static RevitClashService _service;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             try
             {
-                UIApplication uiApp = commandData.Application;
-                if (revitService == null)
+                if (_window != null && _window.IsLoaded)
                 {
-                    revitService = new RevitClashService(uiApp);
+                    _window.Activate();
+                    return Result.Succeeded;
                 }
-                revitService.Initialize();
-                if (mainViewModel == null)
-                {
-                    mainViewModel = new ClashDetectorViewModel(revitService);
-                }
-                else
-                {
-                    if (mainViewModel.IsWindowClosed)
-                    {
 
-                        mainViewModel.ShowMainWindow();
-                    }
-                    else
-                    {
-                        mainViewModel.MainWindow.Activate();
-                    }
-                }
+                UIApplication uiApp = commandData.Application;
+                _service = new RevitClashService(uiApp);
+                _service.Initialize();
+
+                var viewModel = new ClashDetectorViewModel(_service);
+                _window = new ClashDetectorWindow { DataContext = viewModel };
+                new WindowInteropHelper(_window).Owner = uiApp.MainWindowHandle;
+                _window.Closed += (s, e) => _window = null;
+                _window.Show();
 
                 return Result.Succeeded;
             }
             catch (Exception ex)
             {
-                string errormessage = ex.GetType().Name + " " + ex.StackTrace.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-                MessageBox.Show(errormessage);
+                MessageBox.Show(ex.GetType().Name + " " + ex.Message);
                 return Result.Failed;
             }
         }
@@ -60,13 +48,9 @@ namespace ClashDetector
         public static void CreatePanelButton(RibbonPanel ribbonPanel)
         {
             string thisAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            PushButtonData CCData = new PushButtonData("SC",
-                               "SheetCopier",
-                                              thisAssemblyPath,
-                                                             typeof(ClashDetectorCommand).FullName);
-            PushButton CCbutton = ribbonPanel.AddItem(CCData) as PushButton;
-            CCbutton.ToolTip = "Start SheetCopier";
-            //CCbutton.LargeImage = mainViewModel.Icon;
+            PushButtonData ccData = new PushButtonData("SC", "SheetCopier", thisAssemblyPath, typeof(ClashDetectorCommand).FullName);
+            PushButton ccButton = ribbonPanel.AddItem(ccData) as PushButton;
+            ccButton.ToolTip = "Start SheetCopier";
         }
     }
 }

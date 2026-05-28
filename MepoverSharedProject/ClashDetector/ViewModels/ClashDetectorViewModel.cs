@@ -1,21 +1,13 @@
-﻿using Autodesk.Revit.UI;
-using ClashDetector.Views;
+﻿using ClashDetector;
 using MepoverSharedProject;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Interop;
-using UIFramework;
+using System.Threading.Tasks;
 
 namespace ClashDetector.ViewModels
 {
     public class ClashDetectorViewModel : BaseViewModel
     {
-        private RevitClashService revitService;
-
-        #region properties
+        private readonly IClashService _clashService;
 
         private object _selectedViewModel;
         public object SelectedViewModel
@@ -39,6 +31,16 @@ namespace ClashDetector.ViewModels
             }
         }
 
+        private string _statusMessage;
+        public string StatusMessage
+        {
+            get => _statusMessage;
+            set
+            {
+                _statusMessage = value;
+                OnPropertyChanged(nameof(StatusMessage));
+            }
+        }
 
         private HostLinkViewModel _modelsViewModel;
         public HostLinkViewModel ModelsViewModel
@@ -47,16 +49,12 @@ namespace ClashDetector.ViewModels
             {
                 if (_modelsViewModel == null)
                 {
-                    _modelsViewModel = new HostLinkViewModel(revitService.Settings);
+                    _modelsViewModel = new HostLinkViewModel(_clashService.Settings);
                 }
                 return _modelsViewModel;
             }
-            set
-            {
-                _modelsViewModel = value;
-            }
+            set { _modelsViewModel = value; }
         }
-
 
         private CategoriesViewModel _categoryViewModel;
         public CategoriesViewModel CategoryViewModel
@@ -65,16 +63,12 @@ namespace ClashDetector.ViewModels
             {
                 if (_categoryViewModel == null)
                 {
-                    _categoryViewModel = new CategoriesViewModel(revitService.Settings);
+                    _categoryViewModel = new CategoriesViewModel(_clashService.Settings);
                 }
                 return _categoryViewModel;
             }
-            set
-            {
-                _categoryViewModel = value;
-            }
+            set { _categoryViewModel = value; }
         }
-
 
         private WorksetsViewModel _worksetViewModel;
         public WorksetsViewModel WorksetViewModel
@@ -87,50 +81,19 @@ namespace ClashDetector.ViewModels
                 }
                 return _worksetViewModel;
             }
-            set
-            {
-                _worksetViewModel = value;
-            }
+            set { _worksetViewModel = value; }
         }
-
-        public bool IsWindowClosed { get; set; } = true;
-
-        private ClashDetectorWindow _mainWindow;
-        public ClashDetectorWindow MainWindow
-        {
-            get
-            {
-                if (_mainWindow == null)
-                {
-                    _mainWindow = new ClashDetectorWindow() { DataContext = this };
-                }
-                return _mainWindow;
-            }
-            set
-            {
-                _mainWindow = value;
-                OnPropertyChanged(nameof(MainWindow));
-            }
-        }
-
-
-        #endregion
 
         public RelayCommand<object> NavigateToCommand { get; set; }
         public RelayCommand<object> RunCommand { get; set; }
 
-
-        public ClashDetectorViewModel(RevitClashService revitService)
+        public ClashDetectorViewModel(IClashService clashService)
         {
-            this.revitService = revitService;
-            SelectedViewModel = new CategoriesViewModel(revitService.Settings);
+            _clashService = clashService;
+            SelectedViewModel = new CategoriesViewModel(clashService.Settings);
 
             NavigateToCommand = new RelayCommand<object>(p => true, p => NavigateTo(p));
-            RunCommand = new RelayCommand<object>(p => true, p => RunClashes());
-
-
-            ShowMainWindow();
-
+            RunCommand = new RelayCommand<object>(p => true, async p => await RunClashesAsync());
         }
 
         private void NavigateTo(object parameter)
@@ -150,41 +113,13 @@ namespace ClashDetector.ViewModels
                 default:
                     throw new ArgumentException("Invalid navigation target", nameof(parameter));
             }
-            revitService.SendMessage("Switched to " + SelectedButton);
         }
 
-        private void RunClashes()
+        public async Task RunClashesAsync()
         {
-            //revitService.RunClashes();
-            revitService.MakeRequest(RequestId.RunRevitClashes);
-        }
-
-        public void ShowMainWindow()
-        {
-            if (IsWindowClosed)
-            {
-                MainWindow = new ClashDetectorWindow() { DataContext = this };
-                //handler = new RequestHandler(this, revitService);
-                //exEvent = ExternalEvent.Create(handler);
-                WindowInteropHelper helper = new WindowInteropHelper(MainWindow);
-                helper.Owner = revitService.UIApp.MainWindowHandle;
-                MainWindow.ShowDialog();
-                IsWindowClosed = false;
-                MainWindow.Closed += MainWindow_Closed;
-            }
-            else
-            {
-                MainWindow.Activate();
-            }
-        }
-        private void MainWindow_Closed(object sender, EventArgs e)
-        {
-            //exEvent.Dispose();
-            //exEvent = null;
-            //handler = null;
-            revitService.ClosePipe();
-            IsWindowClosed = true;
-            MainWindow.Closed -= MainWindow_Closed;
+            StatusMessage = "Running clash detection...";
+            var clashes = await _clashService.RunClashesAsync();
+            StatusMessage = $"{clashes.Count} clashes found";
         }
     }
 }
