@@ -1,6 +1,6 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using MepoverSharedProject.SheetCopier;
+using SheetCopier;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MepoverSharedProject.SheetCopier
+namespace SheetCopier
 {
     public class RequestHandler : IExternalEventHandler
     {

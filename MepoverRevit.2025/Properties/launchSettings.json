@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "MepoverRevit.2025": {
+      "commandName": "Project"
+    },
+    "Mepover2025": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Autodesk\\Revit 2025\\Revit.exe"
+    }
+  }
+}

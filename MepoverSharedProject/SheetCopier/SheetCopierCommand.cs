@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using UIFramework;
 
-namespace MepoverSharedProject.SheetCopier
+namespace SheetCopier
 {
     [TransactionAttribute(TransactionMode.Manual)]
     [RegenerationAttribute(RegenerationOption.Manual)]

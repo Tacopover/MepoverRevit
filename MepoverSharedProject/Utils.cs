@@ -5,12 +5,10 @@ using System.Reflection;
 using System.Text;
 using System.Windows.Media.Imaging;
 
-namespace MepoverSharedProject.Utilities
+namespace Utilities
 {
     public static class Utils
     {
-
-
         public static System.Windows.Media.Imaging.BitmapImage LoadEmbeddedImage(Assembly assembly, string imagePath)
         {
             var img = new System.Windows.Media.Imaging.BitmapImage();
@@ -29,4 +27,6 @@ namespace MepoverSharedProject.Utilities
             return img;
         }
     }
+
+
 }

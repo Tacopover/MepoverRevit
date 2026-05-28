@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RevitAddIns>
+	<AddIn Type="Application">
+		<Assembly>Mepover\MepoverRevit.2021.dll</Assembly>
+		<ClientId>67dfe842-1a1a-4e9d-9345-ad934926063b</ClientId>
+		<Name>MEPoverRevit</Name>
+		<FullClassName>MepoverSharedProject.RevitApplication</FullClassName>
+		<Text>MepoverRevit</Text>
+		<Description>"Mepover Revit plugins"</Description>
+		<VisibilityMode>AlwaysVisible</VisibilityMode>
+		<VendorId>Mepover</VendorId>
+		<VendorDescription>Mepover, www.mepover.com</VendorDescription>
+	</AddIn>
+</RevitAddIns>

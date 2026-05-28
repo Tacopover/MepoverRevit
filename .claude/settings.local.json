@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path . -Recurse -Depth 2 -Force)",
+      "Bash(Select-Object -Property FullName)",
+      "Bash(git config *)",
+      "Bash(dotnet --version)",
+      "mcp__semble__search",
+      "Bash(dotnet build *)",
+      "Bash(ls -la \"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\\" | head -30)",
+      "Read(//c/Users/taco/source/repos/**)",
+      "PowerShell(head -30)",
+      "Bash(dir \"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverRevit.2025\")",
+      "Skill(superpowers:subagent-driven-development)",
+      "Skill(superpowers:subagent-driven-development:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(dir \"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverRevit.2025\\\\bin\\\\Debug\\\\net8.0-windows\\\\Xbim*.dll\")",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Autodesk\\\\Revit\\\\Addins\\\\2025\\\\Mepover\\\\\" | Select-Object Name | Format-Table -AutoSize)",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "Skill(superpowers:finishing-a-development-branch:*)",
+      "Bash(gh pr create --title 'fix\\(ifc-export\\): hosted element discovery + Xbim .NET 8 assembly loading' --body ' *)",
+      "Skill(context7-mcp)",
+      "Skill(context7-mcp:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Read(//c/Users/taco/Documents/**)",
+      "Bash(not exist *)",
+      "Bash(cd /mnt/c/Users/taco/source/repos/MepoverRevit && dotnet build MepoverRevit.2025/MepoverRevit.2025.csproj -c Debug 2>&1 | tail -40)",
+      "Read(//mnt/c/Users/taco/source/repos/**)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverRevit.2025\\\\MepoverRevit.2025.csproj\" -c Debug 2>&1)",
+      "Bash(Select-String \"error|Build succeeded|FAILED\" -CaseSensitive)",
+      "Bash(Select-String \"error|Build succeeded|FAILED\")",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverSharedProject\\\\IfcExport\" -Filter \"*.cs\")",
+      "Bash(Select-Object Name)",
+      "Bash(\"C:/Users/taco/.claude/plugins/cache/claude-plugins-official/superpowers/f2cbfbefebbf/skills/brainstorming/scripts/start-server.sh\" --project-dir \"c:/Users/taco/source/repos/MepoverRevit\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\taco\\.claude\\projects\\c--Users-taco-source-repos-MepoverRevit\\memory"
+    ]
+  }
+}

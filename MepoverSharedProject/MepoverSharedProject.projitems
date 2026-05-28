@@ -6,13 +6,58 @@
     <SharedGUID>a064d738-a3a2-4aa7-b519-40846acab097</SharedGUID>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
-    <Import_RootNamespace>MepoverSharedProject</Import_RootNamespace>
+    <Import_RootNamespace>
+    </Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcElementWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportPersistenceService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportRequestHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSession.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleExportOrchestrator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleTask.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml.cs">
+      <DependentUpon>IfcExportDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml.cs">
+      <DependentUpon>IfcExportSettingsDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashDetectorCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\IClashService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashDto.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\Clash.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\ElementCollector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\RequestHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\RevitClashService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\CategoriesViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\HostLinkViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\ClashDetectorViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\ListItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\WorksetsViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\CategoriesControl.xaml.cs">
+      <DependentUpon>CategoriesControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\ClashDetectorWindow.xaml.cs">
+      <DependentUpon>ClashDetectorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\HostLinksControl.xaml.cs">
+      <DependentUpon>HostLinksControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\WorksetsControl.xaml.cs">
+      <DependentUpon>WorksetsControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcProjectInitializer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcQuickExporter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PendingChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\WsChangeTestCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PsetMappingParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RelayCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RevitApplication.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\DataGridColumnTPO.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\RelayCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\RevitService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\SheetCopierViewModel.cs" />
@@ -34,11 +79,39 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\CategoriesControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\ClashDetectorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\HostLinksControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\WorksetsControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="$(MSBuildThisFileDirectory)SheetCopier\SheetCopierWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="$(MSBuildThisFileDirectory)SheetCopier\Styles\StylesTotal.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)Styles\StylesTotal.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)Styles\ViewModelMapping.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

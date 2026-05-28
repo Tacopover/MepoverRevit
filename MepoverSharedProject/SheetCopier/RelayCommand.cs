@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace MepoverSharedProject.SheetCopier.Commands
+namespace SheetCopier.Commands
 {
     public class RelayCommand<T> : ICommand
     {
@@ -35,4 +35,38 @@ namespace MepoverSharedProject.SheetCopier.Commands
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
+
+    //public class RelayCommand : ICommand
+    //{
+    //    private readonly Action<string> _execute;
+    //    private readonly Predicate<string> _canExecute;
+
+    //    public RelayCommand(Action<string> execute)
+    //        : this(null, execute)
+    //    {
+    //    }
+
+    //    public RelayCommand(Predicate<string> canExecute, Action<string> execute)
+    //    {
+    //        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+    //        _canExecute = canExecute;
+    //    }
+
+    //    public bool CanExecute(object parameter)
+    //    {
+    //        return _canExecute == null || _canExecute((string)parameter);
+    //    }
+
+    //    public void Execute(object parameter)
+    //    {
+    //        _execute((string)parameter);
+    //    }
+
+    //    public event EventHandler CanExecuteChanged;
+
+    //    public void RaiseCanExecuteChanged()
+    //    {
+    //        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    //    }
+    //}
 }

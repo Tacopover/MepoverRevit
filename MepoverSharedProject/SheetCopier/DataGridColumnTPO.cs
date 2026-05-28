@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 
-namespace MepoverSharedProject.SheetCopier
+namespace SheetCopier
 {
     public sealed class DataGridTemplateColumnTPO : System.Windows.Controls.DataGridTemplateColumn
     {

@@ -1,12 +1,13 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using MepoverSharedProject.Utilities;
+using IfcExport;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows.Media.Imaging;
+using Utilities;
 
 namespace MepoverSharedProject
 {
@@ -21,7 +22,7 @@ namespace MepoverSharedProject
             PushButtonData CCData = new PushButtonData("SC",
                 "SheetCopier",
                 thisAssemblyPath,
-                "MepoverSharedProject.SheetCopier.RevitCommand");
+                "SheetCopier.RevitCommand");
 
             //MethodBase.GetCurrentMethod().DeclaringType?.FullName
 
@@ -31,12 +32,36 @@ namespace MepoverSharedProject
             Icon = Utils.LoadEmbeddedImage(assembly, "SheetCopier.png");
             CCbutton.LargeImage = Icon;
 
+            // IFC Export button
+            PushButtonData ifcData = new PushButtonData(
+                "IFCExport",
+                "IFC\nExport",
+                thisAssemblyPath,
+                "IfcExport.IfcExportCommand");
+            PushButton ifcButton = ribbonPanel.AddItem(ifcData) as PushButton;
+            ifcButton.ToolTip = "Start incremental IFC export during idle time";
+
+            // Temporary test button — verifies that DocumentChanged fires for remote user changes
+            PushButtonData wsTestData = new PushButtonData(
+                "WsChangeTest",
+                "WS Change\nTest",
+                thisAssemblyPath,
+                "IfcExport.WsChangeTestCommand");
+            PushButton wsTestButton = ribbonPanel.AddItem(wsTestData) as PushButton;
+            wsTestButton.ToolTip = "Toggle worksharing change event monitor (logs to %TEMP%\\ws_change_test.log)";
+
         }
         public Result OnStartup(UIControlledApplication application)
         {
+#if REVIT2025
+            // .NET 8 does not automatically search the plugin directory for dependent assemblies.
+            // Register a resolver so Xbim and other NuGet deps are found next to the plugin DLL.
+            AppDomain.CurrentDomain.AssemblyResolve += ResolvePluginAssembly;
+#endif
             try
             {
                 AddRibbonPanel(application);
+                IfcExportCommand.InitializeForAutoStart(application, new IfcExportPersistenceService());
             }
             catch (Exception ex)
             {
@@ -50,6 +75,16 @@ namespace MepoverSharedProject
         {
             return Result.Succeeded;
         }
+
+#if REVIT2025
+        private static Assembly ResolvePluginAssembly(object sender, ResolveEventArgs args)
+        {
+            string pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string assemblyName = new AssemblyName(args.Name).Name;
+            string dllPath = Path.Combine(pluginDir, assemblyName + ".dll");
+            return File.Exists(dllPath) ? Assembly.LoadFrom(dllPath) : null;
+        }
+#endif
 
     }
 }

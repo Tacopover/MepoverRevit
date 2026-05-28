@@ -364,3 +364,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/.superpowers/brainstorm/539-1779795544
+/docs/superpowers
+
+# Git worktrees
+.worktrees/
