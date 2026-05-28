@@ -17,7 +17,7 @@ using System.Windows.Threading;
 
 namespace ClashDetector
 {
-    public class RevitClashService
+    public class RevitClashService : IClashService
     {
         private NamedPipeServerStream pipeServer;
         private StreamReader reader;
@@ -27,6 +27,7 @@ namespace ClashDetector
 
         RequestHandler handler;
         ExternalEvent exEvent;
+        private TaskCompletionSource<IReadOnlyList<ClashDto>> _runTcs;
 
         private Document doc;
         private Options geomOptions = new Options();
@@ -335,7 +336,6 @@ namespace ClashDetector
                 }
 
             }
-            SendMessage(clashes.Count.ToString() + " clashes found");
             return clashes;
 
         }
@@ -604,6 +604,52 @@ namespace ClashDetector
 
             return transformBox;
 
+        }
+
+        public Task<IReadOnlyList<ClashDto>> RunClashesAsync()
+        {
+            _runTcs = new TaskCompletionSource<IReadOnlyList<ClashDto>>();
+            MakeRequest(RequestId.RunRevitClashes);
+            return _runTcs.Task;
+        }
+
+        internal void ExecuteClashRun()
+        {
+            try
+            {
+                List<Clash> clashes = RunClashes();
+                IReadOnlyList<ClashDto> dtos = clashes.Select(MapToDto).ToList();
+                _runTcs?.TrySetResult(dtos);
+            }
+            catch (Exception ex)
+            {
+                _runTcs?.TrySetException(ex);
+            }
+        }
+
+        private static ClashDto MapToDto(Clash clash)
+        {
+            return new ClashDto
+            {
+                ElementId1 = GetIdValue(clash.Element1.Id),
+                ElementId2 = GetIdValue(clash.Element2.Id),
+                Document1 = clash.Document1?.Title,
+                Document2 = clash.Document2?.Title,
+                TypeOfClash = clash.TypeOfClash,
+                X = clash.RevitPoint?.X ?? 0,
+                Y = clash.RevitPoint?.Y ?? 0,
+                Z = clash.RevitPoint?.Z ?? 0,
+                Rotation = clash.Rotation,
+            };
+        }
+
+        private static long GetIdValue(ElementId id)
+        {
+#if REVIT2025
+            return id.Value;
+#else
+            return id.IntegerValue;
+#endif
         }
 
         public void MakeRequest(RequestId request)

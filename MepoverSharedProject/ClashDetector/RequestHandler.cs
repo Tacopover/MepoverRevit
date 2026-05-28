@@ -107,7 +107,7 @@ namespace ClashDetector
 
         public void RunRevitAction()
         {
-            revitService.RunClashes();
+            revitService.ExecuteClashRun();
         }
 
 
