@@ -26,7 +26,7 @@ dotnet build MepoverRevit.sln
 
 Each version-specific project (2021–2025) compiles to `../bin/{Configuration}/{RevitVersion}/`. Post-build events automatically xcopy the DLL, XML config, and `.addin` manifest to `%AppData%\Autodesk\Revit\Addins\{Version}\Mepover`.
 
-There are no automated tests. All testing is manual inside a running Revit session.
+ClashDetector has Revit-free unit tests: `dotnet test ClashDetector.Tests/ClashDetector.Tests.csproj`. All other testing is manual inside a running Revit session.
 
 ## Multi-Version Shared Project Architecture
 
@@ -58,6 +58,10 @@ Use `#if REVIT2025` guards for version-specific API divergences. Never put logic
 - SheetCopier — copies sheets from linked Revit files to the host model
 - ClashDetector — detects clashes between linked models
 - IfcExport — exports 3D geometry to IFC format during Revit idle time
+
+**ClashDetector.DevHost** — standalone .NET 8 WPF exe for UI development without Revit. Links Revit-free files from `MepoverSharedProject` via `<Link>` (no copies — single source of truth). Uses `MockClashService`. Edit views/styles in `MepoverSharedProject` only; both projects pick up changes on next build.
+
+**ClashDetector.Tests** — xUnit tests (net8.0-windows), references `ClashDetector.DevHost`. No Revit required.
 
 ## Build Verification
 
