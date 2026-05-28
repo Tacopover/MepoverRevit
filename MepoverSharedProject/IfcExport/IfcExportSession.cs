@@ -88,11 +88,56 @@ namespace IfcExport
         public DateTime LastSaveUtc   { get; set; } = DateTime.UtcNow;
         public DateTime LastChangeUtc { get; set; } = DateTime.MinValue;
 
+        // ------------------------------------------------------------------ Phase 4B — central file staleness detection
+
+        /// <summary>
+        /// Absolute filesystem path to the central Revit model.
+        /// Null when the document is not workshared or the central model is cloud-hosted.
+        /// </summary>
+        public string CentralFilePath { get; set; }
+
+        /// <summary>
+        /// Last-write UTC timestamp of the central file at the time the IFC was last saved (or the
+        /// last SWC completed). Used to detect changes made by users without the plugin active.
+        /// </summary>
+        public DateTime CentralFileTimestampAtLastSave { get; set; } = DateTime.MinValue;
+
+        /// <summary>UTC timestamp of the last staleness poll against the central file.</summary>
+        public DateTime LastStalenessCheckUtc { get; set; } = DateTime.MinValue;
+
         // ------------------------------------------------------------------ lifecycle
         public void Dispose()
         {
             Store?.Dispose();
             Store = null;
+        }
+
+        /// <summary>
+        /// Clears all export state (queues, maps, Xbim store) without touching session settings
+        /// (destination folder, IFC version, property set mappings, central file path).
+        /// Called when central file staleness triggers a full re-export.
+        /// </summary>
+        public void ResetForFullReExport()
+        {
+            Store?.Dispose();
+            Store = null;
+            ModelContext    = null;
+            FallbackStorey  = null;
+            LevelMap.Clear();
+            ContainsMap.Clear();
+
+            ElementQueue.Clear();
+            PendingChangeQueue.Clear();
+            PendingModifiedIds.Clear();
+            ElementIdIndex.Clear();
+            ExportStateMap.Clear();
+
+            TotalElements              = 0;
+            ExportedElements           = 0;
+            InitialExportComplete      = false;
+            LastDocumentChangedUtc     = DateTime.MinValue;
+            LastStalenessCheckUtc      = DateTime.MinValue;
+            CentralFileTimestampAtLastSave = DateTime.MinValue;
         }
     }
 }

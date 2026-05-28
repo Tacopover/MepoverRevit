@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using IfcExport;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,6 +41,15 @@ namespace MepoverSharedProject
             PushButton ifcButton = ribbonPanel.AddItem(ifcData) as PushButton;
             ifcButton.ToolTip = "Start incremental IFC export during idle time";
 
+            // Temporary test button — verifies that DocumentChanged fires for remote user changes
+            PushButtonData wsTestData = new PushButtonData(
+                "WsChangeTest",
+                "WS Change\nTest",
+                thisAssemblyPath,
+                "IfcExport.WsChangeTestCommand");
+            PushButton wsTestButton = ribbonPanel.AddItem(wsTestData) as PushButton;
+            wsTestButton.ToolTip = "Toggle worksharing change event monitor (logs to %TEMP%\\ws_change_test.log)";
+
         }
         public Result OnStartup(UIControlledApplication application)
         {
@@ -51,6 +61,7 @@ namespace MepoverSharedProject
             try
             {
                 AddRibbonPanel(application);
+                IfcExportCommand.InitializeForAutoStart(application, new IfcExportPersistenceService());
             }
             catch (Exception ex)
             {

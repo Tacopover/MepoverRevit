@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="IFC Export" Height="300" Width="500"
+        Title="IFC Export" Height="250" Width="500"
         WindowStyle="None" AllowsTransparency="True"
         Background="Transparent"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
@@ -21,91 +21,99 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="35"/>
+                <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="40"/>
-                <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
 
-            <!-- Title bar -->
-            <Border Grid.Row="0" CornerRadius="2" BorderBrush="CornflowerBlue" Width="150" Height="30"
-                    BorderThickness="3" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,2,0,0">
-                <TextBlock Text="IFC Export" HorizontalAlignment="Center" FontWeight="Bold" VerticalAlignment="Center"/>
-            </Border>
-            <Button x:Name="ButtonMinimize" Grid.Row="0" Width="24" Height="24" BorderBrush="Transparent"
-                    Style="{StaticResource FlatButton}" Background="Transparent"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,38,0"
-                    Click="ButtonMinimize_Click">
-                <Rectangle Width="12" Height="2" Fill="White"/>
-            </Button>
-            <Button x:Name="ButtonClose" Grid.Row="0" Width="24" Height="24" BorderBrush="Transparent"
-                    Style="{StaticResource ButtonStyleClose}" Background="Transparent" Content="&#x2715;"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,10,0"
-                    Click="ButtonClose_Click"/>
+            <!-- Title bar: [⚙ Settings] | [IFC Export] | [–][✕] -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Settings -->
-            <GroupBox Grid.Row="1" Header="Settings" Margin="10,5,10,5">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="90"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="32"/>
-                        <RowDefinition Height="32"/>
-                        <RowDefinition Height="32"/>
-                    </Grid.RowDefinitions>
+                <Button Grid.Column="0" Content="&#x2699;"
+                        Command="{Binding OpenSettingsCommand}"
+                        Style="{StaticResource IconButton}"
+                        ToolTip="Settings"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        Width="28" Height="28" FontSize="16" Margin="4,0,0,0"/>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="IFC Version:" VerticalAlignment="Center" Margin="5,0"/>
-                    <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
-                              ItemsSource="{Binding IfcVersions}"
-                              SelectedItem="{Binding SelectedIfcVersion}"
-                              Margin="5,3" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" CornerRadius="2" BorderBrush="CornflowerBlue"
+                        BorderThickness="3" VerticalAlignment="Center" Padding="10,2">
+                    <TextBlock Text="IFC Export" FontWeight="Bold" VerticalAlignment="Center"/>
+                </Border>
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Destination:" VerticalAlignment="Center" Margin="5,0"/>
-                    <TextBox Grid.Row="1" Grid.Column="1"
-                             Text="{Binding DestinationFolder, UpdateSourceTrigger=PropertyChanged}"
-                             VerticalAlignment="Center" Margin="5,3"/>
-                    <Button Grid.Row="1" Grid.Column="2" Content="Browse…" Margin="5,3"
-                            Command="{Binding BrowseCommand}" Style="{StaticResource FlatButton}"/>
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Pset file:" VerticalAlignment="Center" Margin="5,0"/>
-                    <TextBox Grid.Row="2" Grid.Column="1"
-                             Text="{Binding PsetMappingFilePath, UpdateSourceTrigger=PropertyChanged}"
-                             VerticalAlignment="Center" Margin="5,3" IsReadOnly="True"/>
-                    <Button Grid.Row="2" Grid.Column="2" Content="Browse…" Margin="5,3"
-                            Command="{Binding BrowsePsetCommand}" Style="{StaticResource FlatButton}"/>
-                </Grid>
-            </GroupBox>
-
-            <!-- Progress -->
-            <GroupBox Grid.Row="2" Header="Progress" Margin="10,0,10,5">
-                <StackPanel Margin="5">
-                    <ProgressBar Height="16" Minimum="0"
-                                 Maximum="{Binding ProgressMax}"
-                                 Value="{Binding ProgressValue}" Margin="0,2,0,4"/>
-                    <TextBlock Text="{Binding StatusText}" FontStyle="Italic"/>
-                    <TextBlock Text="{Binding PendingChanges, StringFormat='Pending changes: {0}'}"
-                               FontSize="10" Margin="0,2,0,0"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,5,8,0">
+                    <Button x:Name="ButtonMinimize" Width="24" Height="24"
+                            Style="{StaticResource IconButton}"
+                            Click="ButtonMinimize_Click">
+                        <Rectangle Width="12" Height="2" Fill="#555555"/>
+                    </Button>
+                    <Button x:Name="ButtonClose" Width="24" Height="24" BorderBrush="Transparent"
+                            Style="{StaticResource ButtonStyleClose}" Background="Transparent"
+                            Content="&#x2715;" Margin="4,0,0,0"
+                            Click="ButtonClose_Click"/>
                 </StackPanel>
-            </GroupBox>
+            </Grid>
 
-            <!-- Controls -->
-            <StackPanel Grid.Row="3" Orientation="Horizontal"
-                        HorizontalAlignment="Right" VerticalAlignment="Center"
-                        Margin="10,0,10,5">
-                <Button Content="Run"    Command="{Binding RunCommand}"    Style="{StaticResource FlatButton}" Width="70" Margin="3,0"/>
-                <Button Content="Pause"  Command="{Binding PauseCommand}"  Style="{StaticResource FlatButton}" Width="70" Margin="3,0"/>
-                <Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource FlatButton}" Width="70" Margin="3,0"/>
-            </StackPanel>
+            <!-- Status band (color-coded by OrchestratorStateName) -->
+            <Border Grid.Row="1" Margin="10,8,10,6" BorderThickness="4,0,0,0" CornerRadius="0,4,4,0">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#F5F5F5"/>
+                        <Setter Property="BorderBrush" Value="#AAAAAA"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding OrchestratorStateName}" Value="RUNNING">
+                                <Setter Property="Background" Value="#F0FFF4"/>
+                                <Setter Property="BorderBrush" Value="#28A745"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding OrchestratorStateName}" Value="PAUSED">
+                                <Setter Property="Background" Value="#FFF8F0"/>
+                                <Setter Property="BorderBrush" Value="#E67E22"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Margin="10,8">
+                    <TextBlock Text="{Binding OrchestratorStateName}" FontWeight="Bold" FontSize="11"/>
+                    <ProgressBar Height="10" Minimum="0"
+                                 Maximum="{Binding ProgressMax}"
+                                 Value="{Binding ProgressValue}"
+                                 Margin="0,5,0,4"/>
+                    <TextBlock Text="{Binding PendingChanges, StringFormat='Pending changes: {0}'}" FontSize="10"/>
+                    <TextBlock Text="{Binding StatusText}" FontStyle="Italic" FontSize="10" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Border>
 
-            <!-- Quick Export: bare-bones synchronous test, no task pump -->
-            <StackPanel Grid.Row="4" Orientation="Horizontal"
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Margin="10,0,10,5">
-                <Button Content="Quick Export (IFC2x3)" Command="{Binding QuickExportCommand}"
-                        Style="{StaticResource FlatButton}" Width="160" Margin="3,0"/>
+            <!-- Controls: Toggle (color by IsExportActive) + Reset -->
+            <Grid Grid.Row="2" Margin="10,0,10,6" VerticalAlignment="Center" Height="34">
+                <Button HorizontalAlignment="Left" Width="160"
+                        Command="{Binding ToggleExportCommand}"
+                        Content="{Binding ToggleExportLabel}">
+                    <Button.Style>
+                        <Style BasedOn="{StaticResource FlatButton}" TargetType="Button">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsExportActive}" Value="False">
+                                    <Setter Property="Background" Value="#E67E22"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button HorizontalAlignment="Right" Width="90" Content="Reset"
+                        Command="{Binding CancelCommand}" Style="{StaticResource DangerButton}"/>
+            </Grid>
+
+            <!-- Utility row: de-emphasized secondary buttons -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10,0,10,8">
+                <Button Content="Quick Export" Command="{Binding QuickExportCommand}"
+                        Style="{StaticResource SecondaryButton}" Width="130" Margin="3,0"/>
+                <Button Content="Export Active View" Command="{Binding ExportViewCommand}"
+                        Style="{StaticResource SecondaryButton}" Width="145" Margin="3,0"/>
             </StackPanel>
         </Grid>
     </Border>

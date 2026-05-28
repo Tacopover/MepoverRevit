@@ -69,15 +69,16 @@
         <Setter Property="FontFamily" Value="Segoe UI"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Background" Value="CornflowerBlue"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Grid>
-                        <Border BorderThickness="3" 
+                        <Border BorderThickness="3"
                              CornerRadius="2"
                              Padding="3"
                              x:Name="ButtonBorder"
-                             Background="CornflowerBlue"
+                             Background="{TemplateBinding Background}"
                          >
                             <Border.BorderBrush>
                                 <SolidColorBrush x:Name="ButtonBorderBrush" Color="CornflowerBlue"/>
@@ -98,6 +99,73 @@
                                     <TranslateTransform Y="1.0" />
                                 </Setter.Value>
                             </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#FFB0B0B0"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DangerButton" TargetType="Button">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="Foreground" Value="#C0392B"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border BorderThickness="2" CornerRadius="2" Padding="3"
+                                x:Name="ButtonBorder" Background="White">
+                            <Border.BorderBrush>
+                                <SolidColorBrush x:Name="DangerBorderBrush" Color="#C0392B"/>
+                            </Border.BorderBrush>
+                            <ContentPresenter VerticalAlignment="Center" Margin="4,2" Name="content"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#FDECEA"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#F5C6CB"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#F5F5F5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="Foreground" Value="#4268A8"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border BorderThickness="1" CornerRadius="2" Padding="3"
+                                x:Name="ButtonBorder" Background="#EDF2FB">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="CornflowerBlue"/>
+                            </Border.BorderBrush>
+                            <ContentPresenter VerticalAlignment="Center" Margin="4,2" Name="content"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#D6E4F7"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#C2D7F0"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#F5F5F5"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

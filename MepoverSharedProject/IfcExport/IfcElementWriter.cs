@@ -12,6 +12,7 @@ using Xbim.Ifc2x3.PropertyResource;
 using Xbim.Ifc2x3.RepresentationResource;
 using Xbim.Ifc2x3.SharedBldgElements;
 using Xbim.Ifc2x3.SharedBldgServiceElements;
+using Xbim.Ifc2x3.SharedFacilitiesElements;
 using Xbim.Ifc2x3.TopologyResource;
 using Xbim.Ifc2x3.UtilityResource;
 
@@ -239,6 +240,139 @@ namespace IfcExport
 
         // ------------------------------------------------------------------ entity type mapping
 
+        // Maps "Export To IFC As" parameter values to IFC2x3 entity factories (case-insensitive).
+        // IFC4 names (IfcDuctSegment, IfcPipeSegment, etc.) map to their IFC2x3 occurrence equivalents
+        // because IFC2x3 only has generic flow element occurrences (IfcFlowSegment, IfcFlowFitting…).
+        private static readonly Dictionary<string, Func<Xbim.Ifc.IfcStore, IfcElement>> IfcTypeNameMap =
+            new Dictionary<string, Func<Xbim.Ifc.IfcStore, IfcElement>>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Architectural
+                { "IfcWall",                 s => s.Instances.New<IfcWall>() },
+                { "IfcWallStandardCase",     s => s.Instances.New<IfcWallStandardCase>() },
+                { "IfcSlab",                 s => s.Instances.New<IfcSlab>() },
+                { "IfcCovering",             s => s.Instances.New<IfcCovering>() },
+                { "IfcColumn",               s => s.Instances.New<IfcColumn>() },
+                { "IfcBeam",                 s => s.Instances.New<IfcBeam>() },
+                { "IfcDoor",                 s => s.Instances.New<IfcDoor>() },
+                { "IfcWindow",               s => s.Instances.New<IfcWindow>() },
+                { "IfcRoof",                 s => s.Instances.New<IfcRoof>() },
+                { "IfcStair",                s => s.Instances.New<IfcStair>() },
+                { "IfcRailing",              s => s.Instances.New<IfcRailing>() },
+                { "IfcRamp",                 s => s.Instances.New<IfcRamp>() },
+                { "IfcCurtainWall",          s => s.Instances.New<IfcCurtainWall>() },
+                { "IfcPlate",                s => s.Instances.New<IfcPlate>() },
+                { "IfcFurnishingElement",    s => s.Instances.New<IfcFurnishingElement>() },
+                { "IfcTransportElement",     s => s.Instances.New<IfcTransportElement>() },
+                { "IfcBuildingElementProxy", s => s.Instances.New<IfcBuildingElementProxy>() },
+                { "IfcElementAssembly",      s => s.Instances.New<IfcElementAssembly>() },
+                // MEP — IFC2x3 occurrence types (no IfcDuctSegment/IfcPipeSegment occurrences in IFC2x3)
+                { "IfcFlowSegment",          s => s.Instances.New<IfcFlowSegment>() },
+                { "IfcDuctSegment",          s => s.Instances.New<IfcFlowSegment>() },   // IFC4 name → IFC2x3
+                { "IfcPipeSegment",          s => s.Instances.New<IfcFlowSegment>() },   // IFC4 name → IFC2x3
+                { "IfcFlowFitting",          s => s.Instances.New<IfcFlowFitting>() },
+                { "IfcDuctFitting",          s => s.Instances.New<IfcFlowFitting>() },   // IFC4 name → IFC2x3
+                { "IfcPipeFitting",          s => s.Instances.New<IfcFlowFitting>() },   // IFC4 name → IFC2x3
+                { "IfcFlowTerminal",         s => s.Instances.New<IfcFlowTerminal>() },
+                { "IfcFlowMovingDevice",     s => s.Instances.New<IfcFlowMovingDevice>() },
+                { "IfcFlowController",       s => s.Instances.New<IfcFlowController>() },
+            };
+
+        // Category integer ID → IFC2x3 entity factory.
+        // Derived from MEPover IFC export mapping.txt — first entry (blank subcategory) per category.
+        private static readonly Dictionary<int, Func<Xbim.Ifc.IfcStore, IfcElement>> CategoryEntityMap =
+            new Dictionary<int, Func<Xbim.Ifc.IfcStore, IfcElement>>
+            {
+                // Architectural
+                { -2000011, s => s.Instances.New<IfcWall>() },               // Walls
+                { -2000032, s => s.Instances.New<IfcSlab>() },               // Floors
+                { -2000038, s => s.Instances.New<IfcCovering>() },           // Ceilings
+                { -2000100, s => s.Instances.New<IfcColumn>() },             // Columns
+                { -2000023, s => s.Instances.New<IfcDoor>() },               // Doors
+                { -2000014, s => s.Instances.New<IfcWindow>() },             // Windows
+                { -2000035, s => s.Instances.New<IfcRoof>() },               // Roofs
+                { -2000120, s => s.Instances.New<IfcStair>() },              // Stairs
+                { -2000126, s => s.Instances.New<IfcRailing>() },            // Railings
+                { -2000180, s => s.Instances.New<IfcRamp>() },               // Ramps
+                { -2000170, s => s.Instances.New<IfcCurtainWall>() },        // Curtain Panels
+                { -2000340, s => s.Instances.New<IfcCurtainWall>() },        // Curtain Systems
+                { -2000171, s => s.Instances.New<IfcCurtainWall>() },        // Curtain Wall Mullions
+                { -2000090, s => s.Instances.New<IfcCurtainWall>() },        // Ruled Curtain System
+                { -2001300, s => s.Instances.New<IfcSlab>() },               // Structural Foundations
+                { -2001330, s => s.Instances.New<IfcColumn>() },             // Structural Columns
+                { -2001354, s => s.Instances.New<IfcPlate>() },              // Structural Stiffeners
+                { -2000080, s => s.Instances.New<IfcFurnishingElement>() },  // Furniture
+                { -2001000, s => s.Instances.New<IfcFurnishingElement>() },  // Casework
+                { -2001052, s => s.Instances.New<IfcTransportElement>() },   // Vertical Circulation
+                { -2000267, s => s.Instances.New<IfcElementAssembly>() },    // Assemblies
+                { -2000269, s => s.Instances.New<IfcBuildingElementProxy>() },// Parts
+                { -2008231, s => s.Instances.New<IfcBuildingElementProxy>() },// MEP Ancillary Framing
+                { -2006130, s => s.Instances.New<IfcSlab>() },               // Abutments
+                { -2006131, s => s.Instances.New<IfcColumn>() },             // Piers
+                { -2006135, s => s.Instances.New<IfcSlab>() },               // Bridge Decks
+                // MEP - Duct (IFC2x3: IfcFlowSegment for segments, IfcFlowFitting for fittings)
+                { -2008000, s => s.Instances.New<IfcFlowSegment>() },        // Ducts
+                { -2008010, s => s.Instances.New<IfcFlowFitting>() },        // Duct Fittings
+                { -2008016, s => s.Instances.New<IfcFlowFitting>() },        // Duct Accessories
+                { -2008020, s => s.Instances.New<IfcFlowSegment>() },        // Flex Ducts
+                { -2008123, s => s.Instances.New<IfcCovering>() },           // Duct Insulations
+                { -2008124, s => s.Instances.New<IfcCovering>() },           // Duct Linings
+                { -2008160, s => s.Instances.New<IfcFlowSegment>() },        // Duct Placeholders
+                { -2008193, s => s.Instances.New<IfcFlowSegment>() },        // MEP Fabrication Ductwork
+                // MEP - Pipe
+                { -2008044, s => s.Instances.New<IfcFlowSegment>() },        // Pipes
+                { -2008049, s => s.Instances.New<IfcFlowFitting>() },        // Pipe Fittings
+                { -2008050, s => s.Instances.New<IfcFlowSegment>() },        // Flex Pipes
+                { -2008055, s => s.Instances.New<IfcFlowController>() },     // Pipe Accessories (valves)
+                { -2008122, s => s.Instances.New<IfcCovering>() },           // Pipe Insulations
+                { -2008161, s => s.Instances.New<IfcFlowSegment>() },        // Pipe Placeholders
+                { -2008208, s => s.Instances.New<IfcFlowSegment>() },        // MEP Fabrication Pipework
+                // MEP - Equipment & devices
+                { -2008013, s => s.Instances.New<IfcFlowTerminal>() },       // Air Terminals
+                { -2001140, s => s.Instances.New<IfcFlowMovingDevice>() },   // Mechanical Equipment
+                { -2008234, s => s.Instances.New<IfcFlowTerminal>() },       // Plumbing Equipment
+                { -2001160, s => s.Instances.New<IfcFlowTerminal>() },       // Plumbing Fixtures
+                { -2001040, s => s.Instances.New<IfcFlowTerminal>() },       // Electrical Equipment
+                { -2001060, s => s.Instances.New<IfcFlowTerminal>() },       // Electrical Fixtures
+                { -2001120, s => s.Instances.New<IfcFlowTerminal>() },       // Lighting Fixtures
+                { -2001049, s => s.Instances.New<IfcFlowTerminal>() },       // Fire Protection
+                { -2008099, s => s.Instances.New<IfcFlowTerminal>() },       // Sprinklers
+                { -2008085, s => s.Instances.New<IfcFlowTerminal>() },       // Fire Alarm Devices
+                { -2008081, s => s.Instances.New<IfcFlowTerminal>() },       // Communication Devices
+                { -2008083, s => s.Instances.New<IfcFlowTerminal>() },       // Data Devices
+                { -2008087, s => s.Instances.New<IfcFlowTerminal>() },       // Lighting Devices
+                { -2008079, s => s.Instances.New<IfcFlowTerminal>() },       // Security Devices
+                { -2008077, s => s.Instances.New<IfcFlowTerminal>() },       // Nurse Call Devices
+                { -2008075, s => s.Instances.New<IfcFlowTerminal>() },       // Telephone Devices
+                { -2008232, s => s.Instances.New<IfcFlowController>() },     // Mechanical Control Devices
+                // MEP - Cable containment
+                { -2008130, s => s.Instances.New<IfcFlowSegment>() },        // Cable Trays
+                { -2008126, s => s.Instances.New<IfcFlowFitting>() },        // Cable Tray Fittings
+                { -2008132, s => s.Instances.New<IfcFlowSegment>() },        // Conduits
+                { -2008128, s => s.Instances.New<IfcFlowFitting>() },        // Conduit Fittings
+            };
+
+        private static string GetExportToIfcAs(Element element)
+        {
+            const string paramName = "Export To IFC As";
+            Parameter p = element.LookupParameter(paramName);
+            if (p != null)
+            {
+                string v = p.AsString();
+                if (!string.IsNullOrWhiteSpace(v)) return v.Trim();
+            }
+            ElementType elemType = element.Document.GetElement(element.GetTypeId()) as ElementType;
+            if (elemType != null)
+            {
+                p = elemType.LookupParameter(paramName);
+                if (p != null)
+                {
+                    string v = p.AsString();
+                    if (!string.IsNullOrWhiteSpace(v)) return v.Trim();
+                }
+            }
+            return null;
+        }
+
         private static IfcElement CreateEntity(
             Xbim.Ifc.IfcStore store,
             Element element,
@@ -246,17 +380,17 @@ namespace IfcExport
             IfcLocalPlacement placement,
             IfcProductDefinitionShape productShape)
         {
-            var i    = store.Instances;
             string name  = element.Name ?? element.Category?.Name ?? "Element";
-            int catId = element.Category?.Id?.IntegerValue ?? 0;
+            int    catId = element.Category?.Id?.IntegerValue ?? 0;
 
             IfcElement e;
-            if (catId == (int)BuiltInCategory.OST_Walls)
-                e = i.New<IfcWall>();
-            else if (catId == (int)BuiltInCategory.OST_DuctCurves)
-                e = i.New<IfcFlowSegment>();
+            string exportAs = GetExportToIfcAs(element);
+            if (!string.IsNullOrEmpty(exportAs) && IfcTypeNameMap.TryGetValue(exportAs, out var namedFactory))
+                e = namedFactory(store);
+            else if (catId != 0 && CategoryEntityMap.TryGetValue(catId, out var catFactory))
+                e = catFactory(store);
             else
-                e = i.New<IfcBuildingElementProxy>();
+                e = store.Instances.New<IfcBuildingElementProxy>();
 
             e.Name            = name;
             e.GlobalId        = guid;

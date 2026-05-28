@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+ï»¿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
@@ -33,7 +33,17 @@ namespace IfcExport
 
         // ------------------------------------------------------------------ public entry point
 
-        public static string Export(UIApplication uiApp, string destinationFolder)
+        /// <param name="viewId">
+        /// When non-null, only elements visible in that view are exported and the view name is
+        /// appended to the output filename (unless <paramref name="callerOutputPath"/> is set).
+        /// Pass <c>null</c> for a full-model export.
+        /// </param>
+        /// <param name="callerOutputPath">
+        /// When non-null, write the IFC directly to this path instead of deriving a filename
+        /// from the document and view name. The caller is responsible for ensuring the directory exists.
+        /// </param>
+        public static string Export(UIApplication uiApp, string destinationFolder,
+            ElementId viewId = null, string callerOutputPath = null)
         {
             try
             {
@@ -41,14 +51,36 @@ namespace IfcExport
                 if (doc == null)
                     return "Error: No active document.";
 
-                if (string.IsNullOrWhiteSpace(destinationFolder))
-                    return "Error: No destination folder selected.";
+                string outputPath;
+                if (!string.IsNullOrWhiteSpace(callerOutputPath))
+                {
+                    outputPath = callerOutputPath;
+                    string dir = Path.GetDirectoryName(callerOutputPath);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(destinationFolder))
+                        return "Error: No destination folder selected.";
 
-                if (!Directory.Exists(destinationFolder))
-                    Directory.CreateDirectory(destinationFolder);
+                    if (!Directory.Exists(destinationFolder))
+                        Directory.CreateDirectory(destinationFolder);
 
-                string outputPath = Path.Combine(destinationFolder,
-                    MakeSafeFileName(doc.Title ?? "export") + ".ifc");
+                    string docTitle = string.IsNullOrEmpty(doc.Title) ? "export" : doc.Title;
+                    string docName  = MakeSafeFileName(Path.GetFileNameWithoutExtension(docTitle));
+
+                    if (viewId != null && viewId != ElementId.InvalidElementId)
+                    {
+                        string viewName = MakeSafeFileName(
+                            (doc.GetElement(viewId) as View)?.Name ?? viewId.ToString());
+                        outputPath = Path.Combine(destinationFolder, docName + "_" + viewName + ".ifc");
+                    }
+                    else
+                    {
+                        outputPath = Path.Combine(destinationFolder, docName + ".ifc");
+                    }
+                }
 
                 var credentials = new XbimEditorCredentials
                 {
@@ -61,17 +93,21 @@ namespace IfcExport
                     EditorsOrganisationName   = "MEPover"
                 };
 
+                int exportedCount;
                 using (var store = IfcStore.Create(credentials, XbimSchemaVersion.Ifc2X3, XbimStoreType.InMemoryModel))
                 {
                     using (var txn = store.BeginTransaction("Build IFC model"))
                     {
                         var hierarchy = BuildProjectHierarchy(store, doc);
-                        ExportElements(store, doc, hierarchy);
+                        exportedCount = ExportElements(store, doc, hierarchy, viewId);
                         txn.Commit();
                     }
 
                     store.SaveAs(outputPath, Xbim.IO.StorageType.Ifc);
                 }
+
+                if (exportedCount == 0)
+                    return "Warning:0:" + outputPath;
 
                 return outputPath;
             }
@@ -102,7 +138,7 @@ namespace IfcExport
                 p.LongName = doc.Title ?? "Revit Project";
             });
 
-            // Units — length (metres) and plane angle (radians) are both required.
+            // Units ï¿½ length (metres) and plane angle (radians) are both required.
             project.UnitsInContext = i.New<IfcUnitAssignment>(u =>
             {
                 u.Units.Add(i.New<IfcSIUnit>(s =>
@@ -117,7 +153,7 @@ namespace IfcExport
                 }));
             });
 
-            // Representation contexts — required for geometry to be valid.
+            // Representation contexts ï¿½ required for geometry to be valid.
             var modelContext = i.New<IfcGeometricRepresentationContext>(c =>
             {
                 c.ContextType              = "Model";
@@ -210,32 +246,57 @@ namespace IfcExport
 
         // ------------------------------------------------------------------ element export
 
-        private static void ExportElements(IfcStore store, Document doc, Hierarchy h)
+        private static int ExportElements(IfcStore store, Document doc, Hierarchy h,
+            ElementId viewId = null)
         {
             // One IfcRelContainedInSpatialStructure per storey, created on demand.
             var containsMap = new Dictionary<IfcBuildingStorey, IfcRelContainedInSpatialStructure>();
 
-            var geomOptions = new Options { DetailLevel = ViewDetailLevel.Fine };
+            // For view-scoped exports, set Options.View so get_Geometry respects the view's
+            // cut plane, phase, and visibility/graphics overrides.
+            View scopedView = (viewId != null && viewId != ElementId.InvalidElementId)
+                ? doc.GetElement(viewId) as View
+                : null;
+            var geomOptions = new Options
+            {
+                DetailLevel = ViewDetailLevel.Fine,
+                View        = scopedView
+            };
 
-            var elements = new FilteredElementCollector(doc)
-                .WhereElementIsNotElementType()
-                .WhereElementIsViewIndependent()
-                .ToList();
+            // View-scoped export: only elements visible in the specified view.
+            // Full-model export: view-independent elements only (annotations excluded).
+            List<Element> elements;
+            if (scopedView != null)
+            {
+                elements = new FilteredElementCollector(doc, viewId)
+                    .WhereElementIsNotElementType()
+                    .ToList();
+            }
+            else
+            {
+                elements = new FilteredElementCollector(doc)
+                    .WhereElementIsNotElementType()
+                    .WhereElementIsViewIndependent()
+                    .ToList();
+            }
 
+            int exported = 0;
             foreach (Element elem in elements)
             {
                 try
                 {
-                    ExportOneElement(store, doc, elem, h, containsMap, geomOptions);
+                    if (ExportOneElement(store, doc, elem, h, containsMap, geomOptions))
+                        exported++;
                 }
                 catch
                 {
-                    // Graceful skip — never let one bad element abort the export.
+                    // skip bad element
                 }
             }
+            return exported;
         }
 
-        private static void ExportOneElement(
+        private static bool ExportOneElement(
             IfcStore store,
             Document doc,
             Element elem,
@@ -245,7 +306,7 @@ namespace IfcExport
         {
             // Extract all solids from this element (unwrap GeometryInstances).
             var solids = ExtractSolids(elem, geomOptions);
-            if (solids.Count == 0) return;
+            if (solids.Count == 0) return false;
 
             // Build one IfcFacetedBrep per solid and collect them.
             var breps = new List<IfcFacetedBrep>();
@@ -255,11 +316,11 @@ namespace IfcExport
                 if (brep != null)
                     breps.Add(brep);
             }
-            if (breps.Count == 0) return;
+            if (breps.Count == 0) return false;
 
             var ifcInst = store.Instances;
 
-            // Shape representation — all breps share one IfcShapeRepresentation.
+            // Shape representation ï¿½ all breps share one IfcShapeRepresentation.
             var shape = ifcInst.New<IfcShapeRepresentation>(s =>
             {
                 s.ContextOfItems          = h.ModelContext;
@@ -269,7 +330,7 @@ namespace IfcExport
             foreach (var brep in breps)
                 shape.Items.Add(brep);
 
-            // IfcBuildingElementProxy — generic IFC entity for any Revit element.
+            // IfcBuildingElementProxy ï¿½ generic IFC entity for any Revit element.
             var proxy = ifcInst.New<IfcBuildingElementProxy>(p =>
             {
                 p.Name            = elem.Name ?? elem.Category?.Name ?? "Element";
@@ -291,6 +352,7 @@ namespace IfcExport
                 containsMap[storey] = rel;
             }
             rel.RelatedElements.Add(proxy);
+            return true;
         }
 
         // ------------------------------------------------------------------ geometry extraction
@@ -343,7 +405,7 @@ namespace IfcExport
                 {
                     MeshTriangle triangle = mesh.get_Triangle(t);
 
-                    // One IfcFace per triangle — three IfcCartesianPoints in an IfcPolyLoop.
+                    // One IfcFace per triangle ï¿½ three IfcCartesianPoints in an IfcPolyLoop.
                     var ifcFace = store.Instances.New<IfcFace>(f =>
                         f.Bounds.Add(store.Instances.New<IfcFaceOuterBound>(b =>
                         {

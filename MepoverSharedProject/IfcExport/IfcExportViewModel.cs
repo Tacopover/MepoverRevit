@@ -14,8 +14,11 @@ namespace IfcExport
         private readonly UIApplication _uiApp;
         private readonly IfcExportRequestHandler _handler;
         private readonly ExternalEvent _externalEvent;
+        private readonly IfcExportPersistenceService _persistence;
         private IfcExportDialog _window;
         private IdleExportOrchestrator _orchestrator;
+
+        private string ActiveDocTitle => _uiApp.ActiveUIDocument?.Document?.Title ?? string.Empty;
 
         public bool IsWindowClosed { get; private set; } = true;
 
@@ -27,14 +30,26 @@ namespace IfcExport
         public string DestinationFolder
         {
             get { return _destinationFolder; }
-            set { _destinationFolder = value; OnPropertyChanged(nameof(DestinationFolder)); }
+            set
+            {
+                _destinationFolder = value;
+                OnPropertyChanged(nameof(DestinationFolder));
+                if (_orchestrator?.State == ExportState.Running)
+                    _persistence?.SaveDocument(ActiveDocTitle, DestinationFolder, SelectedIfcVersion, PsetMappingFilePath);
+            }
         }
 
         private string _selectedIfcVersion = "IFC2x3";
         public string SelectedIfcVersion
         {
             get { return _selectedIfcVersion; }
-            set { _selectedIfcVersion = value; OnPropertyChanged(nameof(SelectedIfcVersion)); }
+            set
+            {
+                _selectedIfcVersion = value;
+                OnPropertyChanged(nameof(SelectedIfcVersion));
+                if (_orchestrator?.State == ExportState.Running)
+                    _persistence?.SaveDocument(ActiveDocTitle, DestinationFolder, SelectedIfcVersion, PsetMappingFilePath);
+            }
         }
 
         public string[] IfcVersions { get; } = { "IFC2x3", "IFC4", "IFC4.3" };
@@ -43,7 +58,13 @@ namespace IfcExport
         public string PsetMappingFilePath
         {
             get { return _psetMappingFilePath; }
-            set { _psetMappingFilePath = value; OnPropertyChanged(nameof(PsetMappingFilePath)); }
+            set
+            {
+                _psetMappingFilePath = value;
+                OnPropertyChanged(nameof(PsetMappingFilePath));
+                if (_orchestrator?.State == ExportState.Running)
+                    _persistence?.SaveDocument(ActiveDocTitle, DestinationFolder, SelectedIfcVersion, PsetMappingFilePath);
+            }
         }
 
         #endregion
@@ -88,20 +109,57 @@ namespace IfcExport
         public RelayCommand<object> BrowseCommand { get; }
         public RelayCommand<object> BrowsePsetCommand { get; }
         public RelayCommand<object> QuickExportCommand { get; }
+        public RelayCommand<object> ExportViewCommand { get; }
+        public RelayCommand<object> ToggleExportCommand { get; }
+        public RelayCommand<object> OpenSettingsCommand { get; }
+
+        public string ToggleExportLabel
+        {
+            get
+            {
+                if (_orchestrator == null
+                    || _orchestrator.State == ExportState.Idle
+                    || _orchestrator.State == ExportState.Cancelled
+                    || _orchestrator.State == ExportState.Completed)
+                    return "▶  Export is off";
+                if (_orchestrator.State == ExportState.Running)
+                    return "⏸  Export is on";
+                return "▶  Export is paused";
+            }
+        }
+
+        public bool IsExportActive =>
+            _orchestrator?.State == ExportState.Running
+            || _orchestrator?.State == ExportState.Paused;
+
+        public string OrchestratorStateName
+        {
+            get
+            {
+                if (_orchestrator == null) return "IDLE";
+                if (_orchestrator.State == ExportState.Running) return "RUNNING";
+                if (_orchestrator.State == ExportState.Paused)  return "PAUSED";
+                return "IDLE";
+            }
+        }
 
         #endregion
 
-        public IfcExportViewModel(UIApplication uiApp, IfcExportRequestHandler handler, ExternalEvent externalEvent)
+        public IfcExportViewModel(UIApplication uiApp, IfcExportRequestHandler handler, ExternalEvent externalEvent, IfcExportPersistenceService persistence = null)
         {
             _uiApp = uiApp;
             _handler = handler;
             _externalEvent = externalEvent;
+            _persistence = persistence;
             RunCommand = new RelayCommand<object>(p => CanRun(), p => OnRun());
             PauseCommand = new RelayCommand<object>(p => CanPause(), p => OnPause());
             CancelCommand = new RelayCommand<object>(p => CanCancel(), p => OnCancel());
             BrowseCommand = new RelayCommand<object>(p => true, p => OnBrowse());
             BrowsePsetCommand = new RelayCommand<object>(p => true, p => OnBrowsePset());
             QuickExportCommand = new RelayCommand<object>(p => true, p => OnQuickExport());
+            ExportViewCommand = new RelayCommand<object>(p => CanExportView(), p => OnExportView());
+            ToggleExportCommand = new RelayCommand<object>(p => true, p => OnToggleExport());
+            OpenSettingsCommand = new RelayCommand<object>(p => true, p => OnOpenSettings());
         }
 
         private bool CanRun()
@@ -127,6 +185,20 @@ namespace IfcExport
                 && _orchestrator.State != ExportState.Completed;
         }
 
+        /// <summary>Restores settings from persistence without triggering a save.</summary>
+        internal void ApplySettings(IfcExportDocumentSettings settings)
+        {
+            _destinationFolder = settings.DestinationFolder;
+            _selectedIfcVersion = settings.IfcVersion;
+            _psetMappingFilePath = settings.PsetMappingFilePath;
+            OnPropertyChanged(nameof(DestinationFolder));
+            OnPropertyChanged(nameof(SelectedIfcVersion));
+            OnPropertyChanged(nameof(PsetMappingFilePath));
+        }
+
+        /// <summary>Starts the export without showing the window — used for silent auto-start.</summary>
+        internal void TriggerStart() => OnRun();
+
         private void OnRun()
         {
             if (string.IsNullOrWhiteSpace(DestinationFolder))
@@ -145,7 +217,27 @@ namespace IfcExport
 
             _handler.Request(IfcExportRequest.Start);
             _externalEvent.Raise();
+            _persistence?.SaveDocument(ActiveDocTitle, DestinationFolder, SelectedIfcVersion, PsetMappingFilePath);
             RefreshCommands();
+        }
+
+        private void OnToggleExport()
+        {
+            if (_orchestrator == null
+                || _orchestrator.State == ExportState.Idle
+                || _orchestrator.State == ExportState.Cancelled
+                || _orchestrator.State == ExportState.Completed)
+                OnRun();
+            else
+                OnPause();
+        }
+
+        private void OnOpenSettings()
+        {
+            var dlg = new IfcExportSettingsDialog { DataContext = this };
+            var helper = new System.Windows.Interop.WindowInteropHelper(dlg);
+            helper.Owner = _uiApp.MainWindowHandle;
+            dlg.ShowDialog();
         }
 
         private void OnPause()
@@ -169,6 +261,7 @@ namespace IfcExport
                 _handler.Request(IfcExportRequest.Cancel);
                 _externalEvent.Raise();
             }
+            _persistence?.RemoveDocument(ActiveDocTitle);
             RefreshCommands();
         }
 
@@ -191,6 +284,20 @@ namespace IfcExport
                 QuickExportCommand.RaiseCanExecuteChanged();
             };
             _handler.Request(IfcExportRequest.QuickExport);
+            _externalEvent.Raise();
+        }
+
+        private bool CanExportView() => _orchestrator?.IsReadyForViewExport == true;
+
+        private void OnExportView()
+        {
+            StatusText = "Exporting active view…";
+            _handler.ExportViewCallback = result =>
+            {
+                StatusText = result;
+                ExportViewCommand.RaiseCanExecuteChanged();
+            };
+            _handler.Request(IfcExportRequest.ExportActiveView);
             _externalEvent.Raise();
         }
 
@@ -233,21 +340,18 @@ namespace IfcExport
             RunCommand.RaiseCanExecuteChanged();
             PauseCommand.RaiseCanExecuteChanged();
             CancelCommand.RaiseCanExecuteChanged();
+            ExportViewCommand.RaiseCanExecuteChanged();
+            ToggleExportCommand.RaiseCanExecuteChanged();
+            OnPropertyChanged(nameof(ToggleExportLabel));
+            OnPropertyChanged(nameof(IsExportActive));
+            OnPropertyChanged(nameof(OrchestratorStateName));
         }
 
         /// <summary>Called by IdleExportOrchestrator when state changes.</summary>
         public void OnOrchestratorStateChanged()
         {
-            ExportState state = _orchestrator != null ? _orchestrator.State : ExportState.Idle;
-            switch (state)
-            {
-                case ExportState.Idle: StatusText = "Ready"; break;
-                case ExportState.Running: StatusText = "Running\u2026"; break;
-                case ExportState.Paused: StatusText = "Paused"; break;
-                case ExportState.Completed: StatusText = "Completed"; break;
-                case ExportState.Cancelled: StatusText = "Cancelled"; break;
-                default: StatusText = "Ready"; break;
-            }
+            OnPropertyChanged(nameof(OrchestratorStateName));
+            OnPropertyChanged(nameof(IsExportActive));
             RefreshCommands();
         }
 

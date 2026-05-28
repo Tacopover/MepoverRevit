@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcElementWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportPersistenceService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportRequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSession.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportViewModel.cs" />
@@ -20,6 +21,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleTask.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml.cs">
       <DependentUpon>IfcExportDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml.cs">
+      <DependentUpon>IfcExportSettingsDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashDetectorCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashSettings.cs" />
@@ -48,6 +52,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcProjectInitializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcQuickExporter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PendingChange.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\WsChangeTestCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PsetMappingParser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RelayCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RevitApplication.cs" />
@@ -78,6 +83,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

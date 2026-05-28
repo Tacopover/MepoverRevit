@@ -1,4 +1,4 @@
-using Autodesk.Revit.UI;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
 
@@ -11,7 +11,8 @@ namespace IfcExport
         Pause,
         Resume,
         Cancel,
-        QuickExport
+        QuickExport,
+        ExportActiveView
     }
 
     /// <summary>
@@ -29,6 +30,9 @@ namespace IfcExport
         // Set before raising a QuickExport request.
         public string QuickExportDestination { get; set; }
         public Action<string> QuickExportCallback { get; set; }
+
+        // Set before raising an ExportActiveView request.
+        public Action<string> ExportViewCallback { get; set; }
 
         public void Request(IfcExportRequest request)
         {
@@ -48,6 +52,24 @@ namespace IfcExport
                 {
                     string result = IfcQuickExporter.Export(app, QuickExportDestination);
                     QuickExportCallback?.Invoke(result);
+                    QuickExportCallback = null;
+                    return;
+                }
+
+                if (req == IfcExportRequest.ExportActiveView)
+                {
+                    ElementId viewId = app.ActiveUIDocument?.ActiveView?.Id;
+                    Document doc     = app.ActiveUIDocument?.Document;
+                    if (viewId == null || doc == null)
+                    {
+                        ExportViewCallback?.Invoke("Error: No active view.");
+                        ExportViewCallback = null;
+                        return;
+                    }
+                    string result = Orchestrator?.ExportActiveView(viewId, doc)
+                                    ?? "Error: Export session not initialised.";
+                    ExportViewCallback?.Invoke(result);
+                    ExportViewCallback = null;
                     return;
                 }
 
@@ -73,7 +95,16 @@ namespace IfcExport
             catch (Exception ex)
             {
                 Orchestrator?.ReportError("Request handler error: " + ex.Message);
-                QuickExportCallback?.Invoke("Error: " + ex.Message);
+                if (req == IfcExportRequest.QuickExport)
+                {
+                    QuickExportCallback?.Invoke("Error: " + ex.Message);
+                    QuickExportCallback = null;
+                }
+                else if (req == IfcExportRequest.ExportActiveView)
+                {
+                    ExportViewCallback?.Invoke("Error: " + ex.Message);
+                    ExportViewCallback = null;
+                }
             }
         }
     }
