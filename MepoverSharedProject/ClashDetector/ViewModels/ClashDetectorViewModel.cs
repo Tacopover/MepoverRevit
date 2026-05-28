@@ -118,8 +118,15 @@ namespace ClashDetector.ViewModels
         public async Task RunClashesAsync()
         {
             StatusMessage = "Running clash detection...";
-            var clashes = await _clashService.RunClashesAsync();
-            StatusMessage = $"{clashes.Count} clashes found";
+            try
+            {
+                var clashes = await _clashService.RunClashesAsync();
+                StatusMessage = $"{clashes.Count} clashes found";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error: {ex.Message}";
+            }
         }
     }
 }
