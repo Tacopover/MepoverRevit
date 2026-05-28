@@ -31,7 +31,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashDto.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\Clash.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\ElementCollector.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\NamedPipeHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\RevitClashService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\CategoriesViewModel.cs" />

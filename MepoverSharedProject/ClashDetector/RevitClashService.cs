@@ -5,26 +5,14 @@ using ClashDetector.Models;
 using ClashDetector.ViewModels;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Pipes;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace ClashDetector
 {
     public class RevitClashService : IClashService
     {
-        private NamedPipeServerStream pipeServer;
-        private StreamReader reader;
-        private StreamWriter writer;
-        private const int MaxRetries = 5;
-        private const int DelayMilliseconds = 1000;
-
         RequestHandler handler;
         ExternalEvent exEvent;
         private TaskCompletionSource<IReadOnlyList<ClashDto>> _runTcs;
@@ -35,28 +23,6 @@ namespace ClashDetector
         public UIApplication UIApp { get; private set; }
         public Dictionary<string, Document> DocumentMap { get; private set; }
         public Dictionary<string, RevitLinkInstance> RevitLinkInstanceMap { get; private set; }
-
-        //private ClashWindow clashWindow;
-        //public ClashWindow ClashWindow
-        //{
-        //    get
-        //    {
-        //        if (clashWindow == null)
-        //        {
-        //            clashWindow = new ClashWindow();
-        //            clashWindow.ViewModel.ResultChanged += OnResultChanged;
-        //        }
-        //        return clashWindow;
-        //    }
-        //}
-
-        private string result;
-        public string Result
-        {
-            get { return result; }
-            set { result = value; }
-        }
-
 
         public RevitClashService(UIApplication uiapp)
         {
@@ -70,162 +36,7 @@ namespace ClashDetector
         {
             PopulateLinkedModels();
             PopulateSettings();
-            //StartServer();
-            //ClashWindow.Show();
-            //ClashWindow testWindow = new ClashWindow();
-            //testWindow.Show();
-
         }
-
-        #region IPC Window
-        private async void StartServer()
-        {
-            int retries = 0;
-            bool pipeCreated = false;
-
-            while (retries < MaxRetries && !pipeCreated)
-            {
-                try
-                {
-                    if (NamedPipeHelper.IsPipeBusy("RevitChat"))
-                    {
-                        NamedPipeHelper.TerminatePipe("RevitChat");
-                    }
-
-                    ClosePipe();
-
-                    if (pipeServer == null || !pipeServer.IsConnected)
-                    {
-                        pipeServer = new NamedPipeServerStream("RevitChat", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous);
-                    }
-                    pipeCreated = true;
-
-
-                    string processName = "RevitClashDetectorUI"; // Name of the process to check
-                    var existingProcesses = System.Diagnostics.Process.GetProcessesByName(processName);
-
-                    if (existingProcesses.Length == 0)
-                    {
-                        Process.Start("C:\\Users\\taco\\source\\repos\\MepoverRevit\\RevitClashDetectorUI\\bin\\Debug\\net8.0-windows\\RevitClashDetectorUI.exe");
-                    }
-
-                    await pipeServer.WaitForConnectionAsync();
-
-                    //MessagesTextBox.AppendText("Connected to client.\n");
-
-                    writer = new StreamWriter(pipeServer) { AutoFlush = true };
-                    reader = new StreamReader(pipeServer);
-
-                    ListenForMessages();
-
-                }
-                catch (IOException ex) when (ex.Message.Contains("All pipe instances are busy"))
-                {
-                    retries++;
-                    Console.WriteLine($"Pipe is busy. Retrying {retries}/{MaxRetries}...");
-                    Thread.Sleep(DelayMilliseconds);
-                }
-            }
-
-            if (!pipeCreated)
-            {
-                Console.WriteLine("Failed to create named pipe server after multiple attempts.");
-            }
-
-
-        }
-
-        public async void SendMessage(string message)
-        {
-            if (pipeServer != null && pipeServer.IsConnected)
-            {
-                await writer.WriteLineAsync(message);
-            }
-            else
-            {
-                MessageBox.Show("Not connected to client");
-            }
-        }
-
-        private async void ListenForMessages()
-        {
-            while (pipeServer.IsConnected)
-            {
-                string message = await reader.ReadLineAsync();
-                if (message == "Run Clashes")
-                {
-                    //Application.Current.Dispatcher.Invoke(() =>
-                    //{
-                    //    MakeRequest(RequestId.RunRevitAction);
-                    //}
-                    //);
-                    MakeRequest(RequestId.RunRevitClashes);
-                }
-            }
-        }
-
-        public void ClosePipe()
-        {
-
-            // Dispose of the pipeClient and other resources
-            if (pipeServer != null)
-            {
-                if (pipeServer.IsConnected)
-                {
-                    pipeServer.WaitForPipeDrain();
-                }
-                pipeServer.Dispose();
-                pipeServer = null;
-            }
-
-            if (reader != null)
-            {
-                reader.Dispose();
-                reader = null;
-            }
-
-            if (writer != null)
-            {
-                writer.Dispose();
-                writer = null;
-            }
-
-        }
-
-        #endregion
-
-        #region logic for starting UI as reference dll
-
-        //private void StartAndConnectToWindow()
-        //{
-        //    uiThread = new Thread(() =>
-        //    {
-        //        mainWindow = new MainWindow();
-        //        mainWindow.RunFromRevit = true;
-        //        mainWindow.Closed += (s, e) => System.Windows.Threading.Dispatcher.ExitAllFrames();
-        //        mainWindow.Show();
-        //        System.Windows.Threading.Dispatcher.Run();
-        //    });
-
-        //    uiThread.SetApartmentState(ApartmentState.STA);
-        //    uiThread.Start();
-        //}
-
-        //// Method to close the MainWindow
-        //public void CloseMainWindow()
-        //{
-        //    if (mainWindow != null)
-        //    {
-        //        mainWindow.Dispatcher.Invoke(() =>
-        //        {
-        //            mainWindow.Close();
-        //        });
-
-        //        uiThread.Join();
-        //    }
-        //}
-
-        #endregion
 
         public List<Clash> RunClashes()
         {
