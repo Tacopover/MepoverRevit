@@ -1,5 +1,4 @@
-﻿using Autodesk.Revit.DB;
-using ClashDetector.ViewModels;
+﻿using ClashDetector.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
