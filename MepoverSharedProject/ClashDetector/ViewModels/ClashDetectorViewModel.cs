@@ -1,6 +1,7 @@
 ﻿using ClashDetector;
 using MepoverSharedProject;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ClashDetector.ViewModels
@@ -17,17 +18,6 @@ namespace ClashDetector.ViewModels
             {
                 _selectedViewModel = value;
                 OnPropertyChanged(nameof(SelectedViewModel));
-            }
-        }
-
-        private string _selectedButton = "General";
-        public string SelectedButton
-        {
-            get => _selectedButton;
-            set
-            {
-                _selectedButton = value;
-                OnPropertyChanged(nameof(SelectedButton));
             }
         }
 
@@ -56,72 +46,34 @@ namespace ClashDetector.ViewModels
             set { _modelsViewModel = value; }
         }
 
-        private CategoriesViewModel _categoryViewModel;
-        public CategoriesViewModel CategoryViewModel
-        {
-            get
-            {
-                if (_categoryViewModel == null)
-                {
-                    _categoryViewModel = new CategoriesViewModel(_clashService.Settings);
-                }
-                return _categoryViewModel;
-            }
-            set { _categoryViewModel = value; }
-        }
-
-        private WorksetsViewModel _worksetViewModel;
-        public WorksetsViewModel WorksetViewModel
-        {
-            get
-            {
-                if (_worksetViewModel == null)
-                {
-                    _worksetViewModel = new WorksetsViewModel();
-                }
-                return _worksetViewModel;
-            }
-            set { _worksetViewModel = value; }
-        }
-
-        public RelayCommand<object> NavigateToCommand { get; set; }
         public RelayCommand<object> RunCommand { get; set; }
+
+        // Raised when a clash run finishes, so the view can open the results window.
+        public event Action<ClashResultsViewModel> ResultsReady;
 
         public ClashDetectorViewModel(IClashService clashService)
         {
             _clashService = clashService;
-            SelectedViewModel = new CategoriesViewModel(clashService.Settings);
+            SelectedViewModel = ModelsViewModel;
 
-            NavigateToCommand = new RelayCommand<object>(p => true, p => NavigateTo(p));
             RunCommand = new RelayCommand<object>(p => true, async p => await RunClashesAsync());
-        }
-
-        private void NavigateTo(object parameter)
-        {
-            SelectedButton = parameter as string;
-            switch (parameter)
-            {
-                case "Models":
-                    SelectedViewModel = ModelsViewModel;
-                    break;
-                case "Categories":
-                    SelectedViewModel = CategoryViewModel;
-                    break;
-                case "Worksets":
-                    SelectedViewModel = WorksetViewModel;
-                    break;
-                default:
-                    throw new ArgumentException("Invalid navigation target", nameof(parameter));
-            }
         }
 
         public async Task RunClashesAsync()
         {
+            if (!_clashService.Settings.RevitModels1.Any(m => m.IsSelected) ||
+                !_clashService.Settings.RevitModels2.Any(m => m.IsSelected))
+            {
+                StatusMessage = "Select at least one model on each side (A and B) before running.";
+                return;
+            }
+
             StatusMessage = "Running clash detection...";
             try
             {
                 var clashes = await _clashService.RunClashesAsync();
                 StatusMessage = $"{clashes.Count} clashes found";
+                ResultsReady?.Invoke(new ClashResultsViewModel(clashes, _clashService));
             }
             catch (Exception ex)
             {

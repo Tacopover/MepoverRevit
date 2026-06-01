@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using ClashDetector.ViewModels;
 
 // The User Control item template is documented at https://go.microsoft.com/fwlink/?LinkId=234236
 
@@ -11,9 +12,38 @@ namespace ClashDetector.Views
 {
     public sealed partial class ClashDetectorWindow : Window
     {
+        private ClashResultsWindow _resultsWindow;
+
         public ClashDetectorWindow()
         {
             InitializeComponent();
+            DataContextChanged += OnDataContextChanged;
+        }
+
+        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.OldValue is ClashDetectorViewModel oldVm)
+            {
+                oldVm.ResultsReady -= ShowResults;
+            }
+            if (e.NewValue is ClashDetectorViewModel newVm)
+            {
+                newVm.ResultsReady += ShowResults;
+            }
+        }
+
+        private void ShowResults(ClashResultsViewModel resultsViewModel)
+        {
+            if (_resultsWindow != null && _resultsWindow.IsLoaded)
+            {
+                _resultsWindow.DataContext = resultsViewModel;
+                _resultsWindow.Activate();
+                return;
+            }
+
+            _resultsWindow = new ClashResultsWindow { DataContext = resultsViewModel, Owner = this };
+            _resultsWindow.Closed += (s, e) => _resultsWindow = null;
+            _resultsWindow.Show();
         }
 
         private void ButtonMinimize_Click(object sender, RoutedEventArgs e)

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clash Results Dialog — Mockup</title>
+<style>
+  :root {
+    --bg: #1c1f26;
+    --panel: #242832;
+    --panel-2: #2c313d;
+    --border: #3a4150;
+    --text: #e6e9ef;
+    --muted: #9aa3b2;
+    --accent: #6495ed;          /* CornflowerBlue — matches existing dialog */
+    --accent-soft: #eef2ff;
+    --radius: 8px;
+    --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+    --sys: "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex;
+    font-family: var(--sys); color: var(--text); background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* ─── Controls column ─── */
+  #controls {
+    width: 320px; flex-shrink: 0; height: 100vh; overflow-y: auto;
+    background: var(--panel); border-right: 1px solid var(--border);
+    padding: 18px 16px 40px;
+  }
+  #controls h1 { font-size: 15px; margin: 0 0 2px; }
+  #controls .sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .group { margin-bottom: 20px; }
+  .group > label.title {
+    display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin-bottom: 8px; font-weight: 600;
+  }
+  .cards { display: flex; flex-direction: column; gap: 6px; }
+  .card {
+    border: 1px solid var(--border); background: var(--panel-2); border-radius: 6px;
+    padding: 9px 10px; cursor: pointer; font-size: 12.5px; transition: .12s;
+  }
+  .card .ttl { font-weight: 600; }
+  .card .desc { font-size: 10.5px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+  .card:hover { border-color: var(--accent); }
+  .card.active { border-color: var(--accent); background: rgba(100,149,237,.14); }
+  .toggle-row, .slider-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12.5px; padding: 4px 0;
+  }
+  .toggle-row input { accent-color: var(--accent); width: 15px; height: 15px; }
+  .slider-row input[type=range] { width: 150px; accent-color: var(--accent); }
+  .val { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 56px; text-align: right; }
+  select {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 5px; padding: 5px 7px; font-size: 12px; width: 100%;
+  }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .preset {
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
+    border-radius: 99px; padding: 5px 11px; font-size: 11.5px; cursor: pointer;
+  }
+  .preset:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── Preview column ─── */
+  #right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 30% 20%, #2a2f3a, var(--bg));
+    overflow: auto; padding: 28px;
+  }
+
+  /* ─── The mock dialog (separate modeless window, matches WPF) ─── */
+  .dialog {
+    background: #fff; color: #2b2b2b; border: 1px solid var(--accent);
+    border-radius: 6px; box-shadow: 0 18px 50px rgba(0,0,0,.45);
+    width: 880px; max-width: 100%; display: flex; flex-direction: column;
+    overflow: hidden; font-size: 12.5px;
+  }
+  .dlg-title {
+    height: 40px; display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid #DDEAFF; position: relative; flex-shrink: 0;
+  }
+  .dlg-title .badge {
+    border: 2px solid var(--accent); border-radius: 3px; padding: 3px 16px;
+    font-weight: 700; font-size: 13px;
+  }
+  .dlg-title .chrome { position: absolute; right: 8px; display: flex; gap: 4px; }
+  .dlg-title .chrome span {
+    width: 22px; height: 22px; display: grid; place-items: center; color: #888;
+    border-radius: 3px; font-size: 11px;
+  }
+  .dlg-title .chrome span:last-child:hover { background: #f5564a; color: #fff; }
+
+  /* toolbar */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border-bottom: 1px solid #DDEAFF; background: #F5F7FF; flex-shrink: 0;
+  }
+  .toolbar .count { font-weight: 600; }
+  .toolbar .count b { color: var(--accent); }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .legend { font-size: 11px; color: #6677aa; display: flex; align-items: center; gap: 5px; }
+  .toolbar .legend .sw { width: 13px; height: 13px; border-radius: 3px; background: rgba(100,149,237,.20); border: 1px solid #b9c9f5; }
+  .toolbar .search {
+    display: flex; align-items: center; gap: 6px; border: 1px solid #cdd8f0;
+    background: #fff; border-radius: 5px; padding: 4px 8px; width: 220px;
+  }
+  .toolbar .search input { border: 0; outline: 0; font-size: 12px; width: 100%; background: transparent; }
+  .toolbar select { width: auto; background:#fff; color:#2b2b2b; border-color:#cdd8f0; }
+
+  /* body region (grid and/or detail) */
+  .dlg-body { display: flex; min-height: 320px; max-height: 60vh; }
+  .filter-sidebar {
+    display: flex; width: 170px; flex-shrink: 0; flex-direction: column; gap: 12px;
+    border-right: 1px solid #DDEAFF; background: #FAFBFF; padding: 12px 12px; overflow:auto;
+  }
+  .filter-sidebar h4 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; color: #98a; letter-spacing:.05em;}
+  .filter-sidebar .fld { margin-bottom: 8px; }
+
+  .grid-wrap { flex: 1; overflow: auto; min-width: 0; }
+  table { border-collapse: collapse; width: 100%; }
+  thead th {
+    position: sticky; top: 0; background: #EEF2FF; color: #33415c; text-align: left;
+    font-weight: 600; font-size: 11.5px; padding: 7px 10px; border-bottom: 1px solid #cdd8f0;
+    white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  thead th .arrow { color: var(--accent); font-size: 10px; }
+  thead th.grpA { border-left: 3px solid #cfd9f2; }
+  thead th.grpB { border-left: 3px solid #cfd9f2; }
+  .grouphdr th {
+    background:#fff; text-align:center; font-size:10px; letter-spacing:.08em;
+    text-transform:uppercase; color:#8a93a8; padding:4px; border-bottom:1px solid #eef;
+  }
+  .grouphdr th.grpA, .grouphdr th.grpB { color:#4f6dc0; background:#f3f6ff; }
+  /* filter row */
+  tr.filterrow th { background:#fff; padding:4px 6px; position: sticky; top: 30px; cursor:default; }
+  tr.filterrow input {
+    width: 100%; border: 1px solid #d8e0f2; border-radius: 4px; padding: 3px 5px;
+    font-size: 11px; outline: none;
+  }
+  tr.filterrow input::placeholder { color:#bcc6da; }
+
+  tbody td { padding: 6px 10px; border-bottom: 1px solid #f0f3fa; white-space: nowrap; }
+  tbody td.grpA { border-left: 3px solid #f3f6ff; }
+  tbody td.grpB { border-left: 3px solid #f3f6ff; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: #F7F9FF; }
+  tbody tr.sel { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+  .compact tbody td { padding: 3px 10px; }
+
+  /* in-open-model marker variants (applied per element, only when inModel) */
+  .mk-badge {
+    font-size: 9.5px; font-weight: 700; color: #fff; background: var(--accent);
+    border-radius: 3px; padding: 1px 5px; margin-left: 6px; vertical-align: middle;
+  }
+  td.mk-tint { background: rgba(100,149,237,.12); }
+  tbody tr.sel td.mk-tint { background: rgba(100,149,237,.22); }
+  .mk-pin { color: var(--accent); margin-right: 4px; }
+  .mk-bold { font-weight: 700; color:#1f3a73; }
+  .linked-note { color:#b0b8c8; font-size:10px; font-style:italic; }
+
+  /* master-detail right panel */
+  .detail {
+    width: 340px; flex-shrink: 0; border-left: 1px solid #DDEAFF; background:#FAFBFF;
+    padding: 14px; overflow: auto; display: flex; flex-direction: column; gap: 12px;
+  }
+  .detail .clash-head { font-weight:700; font-size:13px; }
+  .el-card { border:1px solid #DDEAFF; border-radius:6px; padding:10px; background:#fff; }
+  .el-card.host { border-color: var(--accent); box-shadow:0 0 0 1px rgba(100,149,237,.25);}
+  .el-card .eyebrow { font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:#98a; }
+  .el-card .nm { font-weight:600; margin:2px 0 8px; }
+  .el-card .prm { display:flex; justify-content:space-between; font-size:11.5px; padding:2px 0; color:#555;}
+  .el-card .prm b { color:#222; font-weight:600; }
+  .listcol { width: 250px; flex-shrink:0; border-right:1px solid #DDEAFF; overflow:auto; }
+  .listcol .li { padding:9px 12px; border-bottom:1px solid #f0f3fa; cursor:pointer; }
+  .listcol .li:hover { background:#F7F9FF; }
+  .listcol .li.sel { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+  .listcol .li .l1 { font-weight:600; font-size:12px; }
+  .listcol .li .l2 { font-size:11px; color:#7a8398; margin-top:2px; }
+
+  /* footer */
+  .dlg-foot {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border-top: 1px solid #DDEAFF; background: #F5F7FF; flex-shrink: 0;
+  }
+  .dlg-foot .hint { font-size: 11px; color: #888; font-style: italic; flex:1; }
+  .btn {
+    border: 1px solid var(--accent); border-radius: 5px; padding: 7px 16px; font-size: 12px;
+    cursor: pointer; background:#fff; color: var(--accent); font-weight:600;
+  }
+  .btn.primary { background: var(--accent); color:#fff; }
+  .btn:disabled { opacity:.4; cursor:default; border-color:#c2c8d4; background:#f1f3f7; color:#9aa3b2; }
+
+  /* ─── prompt output ─── */
+  #promptbar {
+    border-top: 1px solid var(--border); background: var(--panel); padding: 12px 16px;
+    flex-shrink: 0; max-height: 250px; display:flex; flex-direction:column;
+  }
+  #promptbar .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  #promptbar .head span { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; }
+  #prompt {
+    font-family: var(--mono); font-size: 11.5px; line-height:1.5; color:#cdd6e4;
+    background: var(--bg); border:1px solid var(--border); border-radius:6px;
+    padding: 10px 12px; white-space: pre-wrap; overflow:auto; flex:1;
+  }
+  #copy {
+    border:1px solid var(--accent); background:var(--accent); color:#fff; font-weight:600;
+    border-radius:5px; padding:6px 14px; font-size:12px; cursor:pointer;
+  }
+  #copy.copied { background:#34915a; border-color:#34915a; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <h1>Clash Results Dialog</h1>
+  <div class="sub">Mockup explorer — adjust, then copy the build prompt.</div>
+
+  <div class="group">
+    <label class="title">Presets</label>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <div class="group">
+    <label class="title">Layout</label>
+    <div class="cards" id="layoutCards"></div>
+  </div>
+
+  <div class="group">
+    <label class="title">Filter / sort UI</label>
+    <div class="cards" id="filterCards"></div>
+  </div>
+
+  <div class="group">
+    <label class="title">"In open model" marker</label>
+    <select id="marker">
+      <option value="tint">Tinted element cells</option>
+      <option value="badge">Blue "IN MODEL" badge</option>
+      <option value="pin">Location-pin icon</option>
+      <option value="bold">Bold accent text</option>
+    </select>
+    <div class="sub" style="margin-top:6px">Applied to whichever element is in the open host model — that is the selectable one. A clash with neither element in the open model (both linked) gets no marker and cannot be selected.</div>
+  </div>
+
+  <div class="group">
+    <label class="title">Columns</label>
+    <div class="toggle-row"><span>Category</span><input type="checkbox" id="c_cat" checked></div>
+    <div class="toggle-row"><span>Level</span><input type="checkbox" id="c_level" checked></div>
+    <div class="toggle-row"><span>Element ID</span><input type="checkbox" id="c_id"></div>
+    <div class="toggle-row"><span>Overlap volume</span><input type="checkbox" id="c_vol" checked></div>
+    <div class="toggle-row"><span>Per-row "Select" button</span><input type="checkbox" id="c_rowbtn"></div>
+  </div>
+
+  <div class="group">
+    <label class="title">Density</label>
+    <div class="slider-row">
+      <input type="range" id="density" min="0" max="1" value="0">
+      <span class="val" id="densityVal">Comfortable</span>
+    </div>
+  </div>
+
+  <div class="group">
+    <label class="title">Try it</label>
+    <div class="sub">Click rows to select. Ctrl+click adds to the selection (multi-select); Shift+click selects a range. The footer "Select in Revit" button enables only when the selection contains host-model elements.</div>
+  </div>
+</div>
+
+<div id="right">
+  <div id="stage">
+    <div class="dialog" id="dialog"></div>
+  </div>
+
+  <div id="promptbar">
+    <div class="head">
+      <span>Build prompt</span>
+      <button id="copy">Copy Prompt</button>
+    </div>
+    <div id="prompt"></div>
+  </div>
+</div>
+
+<script>
+// ─── mock clash data ───
+// Each element carries inModel: true means it lives in the open host model (selectable).
+// Clash #8 is the "both linked" case — neither element is in the open model.
+const OPEN_MODEL = 'Host.rvt';
+const CLASHES = [
+  { id:1, vol:128,
+    a:{name:'Rectangular Duct 400x200', cat:'Ducts',             level:'Level 2', eid:'884211', inModel:true },
+    b:{name:'Basic Wall - Interior 150', cat:'Walls',            level:'Level 2', eid:'STR:55120', inModel:false} },
+  { id:2, vol:24,
+    a:{name:'Pipe Type - Std 110mm',     cat:'Pipes',            level:'Level 1', eid:'884556', inModel:true },
+    b:{name:'Floor - Concrete 200',      cat:'Floors',           level:'Level 1', eid:'STR:51002', inModel:false} },
+  { id:3, vol:342,
+    a:{name:'Cable Tray 300mm',          cat:'Cable Trays',      level:'Level 3', eid:'890014', inModel:true },
+    b:{name:'Structural Beam W12x26',    cat:'Structural Framing',level:'Level 3', eid:'STR:60221', inModel:false} },
+  { id:4, vol:9,
+    a:{name:'Rectangular Duct 600x300',  cat:'Ducts',            level:'Level 2', eid:'884777', inModel:true },
+    b:{name:'Round Column 400mm',        cat:'Columns',          level:'Level 2', eid:'STR:58810', inModel:false} },
+  { id:5, vol:201,
+    a:{name:'Pipe Type - Std 75mm',      cat:'Pipes',            level:'Level 1', eid:'884901', inModel:true },
+    b:{name:'Basic Wall - Exterior 300', cat:'Walls',            level:'Level 1', eid:'STR:55230', inModel:false} },
+  { id:6, vol:63,
+    a:{name:'Conduit 25mm',              cat:'Conduits',         level:'Level 3', eid:'891200', inModel:true },
+    b:{name:'Floor - Slab 250',          cat:'Floors',           level:'Level 3', eid:'STR:51440', inModel:false} },
+  { id:7, vol:155,
+    a:{name:'Rectangular Duct 400x200',  cat:'Ducts',            level:'Level 1', eid:'884233', inModel:true },
+    b:{name:'Structural Beam W14x30',    cat:'Structural Framing',level:'Level 1', eid:'STR:60310', inModel:false} },
+  { id:8, vol:47,   /* both elements in linked models — NOT selectable */
+    a:{name:'Duct - Arch coord 250x150', cat:'Ducts',            level:'Level 2', eid:'ARC:77010', inModel:false},
+    b:{name:'Structural Beam W10x22',    cat:'Structural Framing',level:'Level 2', eid:'STR:60455', inModel:false} },
+];
+
+const DEFAULTS = {
+  layout: 'clash-row', filter: 'colfilter', marker: 'tint',
+  cat:true, level:true, eid:false, vol:true, rowbtn:false, density:0
+};
+const state = { ...DEFAULTS };
+
+const LAYOUTS = [
+  { id:'clash-row',     ttl:'Row per clash',  desc:'One grid row per clash. The two elements shown as grouped column pairs (Element 1 / Element 2).' },
+  { id:'master-detail', ttl:'Master–detail',  desc:'Clash list on the left, the two elements expanded on the right.' },
+  { id:'grouped',       ttl:'Grouped rows',   desc:'Each clash is a group header with its two elements as sub-rows.' },
+];
+const FILTERS = [
+  { id:'colfilter', ttl:'Per-column filters', desc:'Filter box under each header — type to filter by that parameter.' },
+  { id:'toolbar',   ttl:'Toolbar search',     desc:'Single search box + sort dropdown in the toolbar.' },
+  { id:'sidebar',   ttl:'Filter sidebar',     desc:'Dedicated left panel with per-parameter filter fields.' },
+];
+
+let selected = new Set([1]);    // multi-select set of clash ids
+let lastClicked = 1;
+let sortState = { key:'id', dir:1 };
+
+// ─── build controls ───
+const layoutCards = document.getElementById('layoutCards');
+LAYOUTS.forEach(l=>{
+  const d=document.createElement('div'); d.className='card'; d.dataset.id=l.id;
+  d.innerHTML=`<div class="ttl">${l.ttl}</div><div class="desc">${l.desc}</div>`;
+  d.onclick=()=>{ state.layout=l.id; syncCards(); updateAll(); };
+  layoutCards.appendChild(d);
+});
+const filterCards = document.getElementById('filterCards');
+FILTERS.forEach(f=>{
+  const d=document.createElement('div'); d.className='card'; d.dataset.id=f.id;
+  d.innerHTML=`<div class="ttl">${f.ttl}</div><div class="desc">${f.desc}</div>`;
+  d.onclick=()=>{ state.filter=f.id; syncCards(); updateAll(); };
+  filterCards.appendChild(d);
+});
+function syncCards(){
+  layoutCards.querySelectorAll('.card').forEach(c=>c.classList.toggle('active',c.dataset.id===state.layout));
+  filterCards.querySelectorAll('.card').forEach(c=>c.classList.toggle('active',c.dataset.id===state.filter));
+}
+
+const marker=document.getElementById('marker');
+marker.onchange=()=>{ state.marker=marker.value; updateAll(); };
+['cat','level','eid','vol','rowbtn'].forEach(k=>{
+  const el=document.getElementById('c_'+k);
+  el.onchange=()=>{ state[k]=el.checked; updateAll(); };
+});
+const density=document.getElementById('density');
+density.oninput=()=>{ state.density=+density.value;
+  document.getElementById('densityVal').textContent = state.density? 'Compact':'Comfortable'; updateAll(); };
+
+// presets
+const PRESETS = {
+  'Recommended': { layout:'clash-row', filter:'colfilter', marker:'tint', cat:true,level:true,eid:false,vol:true,rowbtn:false,density:0 },
+  'Triage focus': { layout:'master-detail', filter:'sidebar', marker:'bold', cat:true,level:true,eid:true,vol:true,rowbtn:false,density:0 },
+  'Dense table': { layout:'clash-row', filter:'toolbar', marker:'badge', cat:true,level:true,eid:true,vol:true,rowbtn:true,density:1 },
+  'Grouped': { layout:'grouped', filter:'toolbar', marker:'pin', cat:true,level:true,eid:false,vol:true,rowbtn:false,density:0 },
+};
+const presetsEl=document.getElementById('presets');
+Object.keys(PRESETS).forEach(name=>{
+  const b=document.createElement('button'); b.className='preset'; b.textContent=name;
+  b.onclick=()=>{ Object.assign(state,PRESETS[name]); reflectControls(); updateAll(); };
+  presetsEl.appendChild(b);
+});
+function reflectControls(){
+  marker.value=state.marker;
+  ['cat','level','eid','vol','rowbtn'].forEach(k=>document.getElementById('c_'+k).checked=state[k]);
+  density.value=state.density;
+  document.getElementById('densityVal').textContent = state.density? 'Compact':'Comfortable';
+  syncCards();
+}
+
+// ─── element rendering helpers ───
+function elName(el){
+  if(!el.inModel) return el.name;
+  if(state.marker==='badge') return `${el.name}<span class="mk-badge">IN MODEL</span>`;
+  if(state.marker==='pin')   return `<span class="mk-pin">◉</span>${el.name}`;
+  if(state.marker==='bold')  return `<span class="mk-bold">${el.name}</span>`;
+  return el.name;
+}
+function tintCls(el){ return (el.inModel && state.marker==='tint') ? ' mk-tint' : ''; }
+function selectableCount(){
+  let n=0;
+  CLASHES.filter(c=>selected.has(c.id)).forEach(c=>{ if(c.a.inModel)n++; if(c.b.inModel)n++; });
+  return n;
+}
+
+// ─── toolbar ───
+function renderToolbar(count){
+  let left = `<div class="count"><b>${count}</b> clashes found</div>`;
+  if(state.marker==='tint') left += `<div class="legend"><span class="sw"></span>in open model · selectable</div>`;
+  let right='';
+  if(state.filter==='toolbar'){
+    right = `<select title="Sort by">
+        <option>Sort: Clash #</option>
+        <option>El 1 · Name</option><option>El 1 · Level</option><option>El 1 · Category</option>
+        <option>El 2 · Name</option><option>El 2 · Level</option><option>El 2 · Category</option>
+        <option>Overlap volume</option>
+      </select>
+      <div class="search">\u{1F50D}<input placeholder="Filter clashes…"></div>`;
+  } else {
+    right = `<span style="font-size:11px;color:#98a">Ctrl+click for multi-select</span>`;
+  }
+  return `<div class="toolbar">${left}<div class="spacer"></div>${right}</div>`;
+}
+
+function arrow(key){ return sortState.key===key ? `<span class="arrow">${sortState.dir>0?'▲':'▼'}</span>` : ''; }
+
+// ─── layout: row per clash ───
+function renderClashRowTable(rows){
+  const c=state;
+  const elSpan = 1 + (c.cat?1:0)+(c.level?1:0)+(c.eid?1:0);
+  let head1=`<th></th>`;
+  head1+=`<th class="grpA" colspan="${elSpan}">Element 1</th>`;
+  head1+=`<th class="grpB" colspan="${elSpan}">Element 2</th>`;
+  if(c.vol) head1+=`<th></th>`;
+  if(c.rowbtn) head1+=`<th></th>`;
+
+  const col=(label,key,grp)=>`<th class="${grp}" onclick="sortBy('${key}')">${label}${arrow(key)}</th>`;
+  let head2=`<th></th>`;
+  head2+=col('Name','a.name','grpA');
+  if(c.cat)   head2+=col('Category','a.cat','grpA');
+  if(c.level) head2+=col('Level','a.level','grpA');
+  if(c.eid)   head2+=col('ID','a.eid','grpA');
+  head2+=col('Name','b.name','grpB');
+  if(c.cat)   head2+=col('Category','b.cat','grpB');
+  if(c.level) head2+=col('Level','b.level','grpB');
+  if(c.eid)   head2+=col('ID','b.eid','grpB');
+  if(c.vol)   head2+=col('Overlap (cm³)','vol','');
+  if(c.rowbtn) head2+=`<th></th>`;
+
+  let filt='';
+  if(c.filter==='colfilter'){
+    const f=(grp,ph)=>`<th class="${grp}"><input placeholder="${ph}"></th>`;
+    filt=`<tr class="filterrow"><th></th>`;
+    filt+=f('grpA','name…'); if(c.cat) filt+=f('grpA','cat…'); if(c.level) filt+=f('grpA','level…'); if(c.eid) filt+=f('grpA','id…');
+    filt+=f('grpB','name…'); if(c.cat) filt+=f('grpB','cat…'); if(c.level) filt+=f('grpB','level…'); if(c.eid) filt+=f('grpB','id…');
+    if(c.vol) filt+=f('',''); if(c.rowbtn) filt+=`<th></th>`;
+    filt+=`</tr>`;
+  }
+
+  let body='';
+  rows.forEach(r=>{
+    const sel = selected.has(r.id) ? ' sel':'';
+    const cell=(el,p,grp,mono)=>`<td class="${grp}${tintCls(el)}"${mono?' style="font-family:var(--mono);font-size:11px"':''}>${el[p]}</td>`;
+    let tds=`<td style="text-align:center;color:var(--accent)">${selected.has(r.id)?'●':''}</td>`;
+    tds+=`<td class="grpA${tintCls(r.a)}">${elName(r.a)}</td>`;
+    if(c.cat)   tds+=cell(r.a,'cat','grpA');
+    if(c.level) tds+=cell(r.a,'level','grpA');
+    if(c.eid)   tds+=cell(r.a,'eid','grpA',true);
+    tds+=`<td class="grpB${tintCls(r.b)}">${elName(r.b)}</td>`;
+    if(c.cat)   tds+=cell(r.b,'cat','grpB');
+    if(c.level) tds+=cell(r.b,'level','grpB');
+    if(c.eid)   tds+=cell(r.b,'eid','grpB',true);
+    if(c.vol)   tds+=`<td>${r.vol}</td>`;
+    if(c.rowbtn){
+      const can=r.a.inModel||r.b.inModel;
+      tds+=`<td><button class="rowbtn btn" style="padding:2px 8px;font-size:10.5px" ${can?'':'disabled'} onclick="event.stopPropagation();flash(this)">Select</button></td>`;
+    }
+    body+=`<tr class="${sel}" onclick="pick(${r.id},event)">${tds}</tr>`;
+  });
+
+  return `<div class="grid-wrap"><table>
+    <thead><tr class="grouphdr">${head1}</tr><tr>${head2}</tr>${filt}</thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+
+// ─── layout: grouped rows ───
+function renderGrouped(rows){
+  const c=state;
+  const colcount = 1 + (c.cat?1:0)+(c.level?1:0)+(c.eid?1:0)+(c.vol?1:0);
+  let body='';
+  rows.forEach(r=>{
+    const sel=selected.has(r.id)?' sel':'';
+    const linked = (!r.a.inModel && !r.b.inModel) ? ` · <span class="linked-note">both linked — not selectable</span>` : '';
+    body+=`<tr class="grouphdr" onclick="pick(${r.id},event)" style="cursor:pointer">
+      <th colspan="${colcount}" style="text-align:left;background:${selected.has(r.id)?'var(--accent-soft)':'#fbfcff'};color:#33415c;padding:6px 10px;border-top:1px solid #e6ecfa">
+        ▸ Clash #${r.id}${c.vol?` · ${r.vol} cm³ overlap`:''}${linked}</th></tr>`;
+    const elRow=(role,el)=>{
+      let t=`<td class="${tintCls(el)}" style="padding-left:24px">${elName(el)}</td>`;
+      if(c.cat) t+=`<td class="${tintCls(el)}">${el.cat}</td>`;
+      if(c.level) t+=`<td class="${tintCls(el)}">${el.level}</td>`;
+      if(c.eid) t+=`<td class="${tintCls(el)}" style="font-family:var(--mono);font-size:11px">${el.eid}</td>`;
+      if(c.vol) t+=`<td></td>`;
+      return `<tr class="${sel}" onclick="pick(${r.id},event)">${t}</tr>`;
+    };
+    body+=elRow('1', r.a);
+    body+=elRow('2', r.b);
+  });
+  let head=`<th>Element</th>`;
+  if(c.cat) head+=`<th>Category</th>`;
+  if(c.level) head+=`<th>Level</th>`;
+  if(c.eid) head+=`<th>ID</th>`;
+  if(c.vol) head+=`<th></th>`;
+  return `<div class="grid-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+// ─── layout: master-detail ───
+function renderMasterDetail(rows){
+  const c=state;
+  let list='';
+  rows.forEach(r=>{
+    const sel=selected.has(r.id)?' sel':'';
+    const linked = (!r.a.inModel && !r.b.inModel) ? `<span class="linked-note" style="float:right">both linked</span>` : '';
+    list+=`<div class="li${sel}" onclick="pick(${r.id},event)">
+      <div class="l1">Clash #${r.id} ${linked}</div>
+      <div class="l2">${r.a.cat} ✕ ${r.b.cat}${c.vol?` · ${r.vol} cm³`:''}</div></div>`;
+  });
+  const r = rows.find(x=>x.id===lastClicked) || rows.find(x=>selected.has(x.id)) || rows[0];
+  const prm=(el)=>{
+    let p=`<div class="prm"><span>Name</span><b>${el.name}</b></div>`;
+    if(c.cat) p+=`<div class="prm"><span>Category</span><b>${el.cat}</b></div>`;
+    if(c.level) p+=`<div class="prm"><span>Level</span><b>${el.level}</b></div>`;
+    if(c.eid) p+=`<div class="prm"><span>Element ID</span><b>${el.eid}</b></div>`;
+    return p;
+  };
+  const elCard=(role,el)=>`
+    <div class="el-card${el.inModel?' host':''}">
+      <div class="eyebrow">Element ${role}${el.inModel?' · in open model':' · linked'}</div>
+      <div class="nm">${elName(el)}</div>${prm(el)}
+      ${el.inModel?`<button class="btn primary" style="width:100%;margin-top:8px" onclick="flash(this)">Select in Revit</button>`
+                  :`<div class="linked-note" style="margin-top:6px">Linked — not selectable in the open model</div>`}
+    </div>`;
+  let detail='';
+  if(r){
+    detail=`<div class="clash-head">Clash #${r.id}${c.vol?` — ${r.vol} cm³ overlap`:''}</div>
+      ${elCard('1', r.a)}${elCard('2', r.b)}`;
+  }
+  const sidebar = c.filter==='sidebar' ? renderSidebar() : '';
+  return `${sidebar}<div class="listcol">${list}</div><div class="detail">${detail}</div>`;
+}
+
+function renderSidebar(){
+  return `<div class="filter-sidebar">
+    <div>
+      <h4>Element 1</h4>
+      <div class="fld"><select><option>Category: any</option><option>Ducts</option><option>Pipes</option><option>Cable Trays</option></select></div>
+      <div class="fld"><select><option>Level: any</option><option>Level 1</option><option>Level 2</option><option>Level 3</option></select></div>
+    </div>
+    <div>
+      <h4>Element 2</h4>
+      <div class="fld"><select><option>Category: any</option><option>Walls</option><option>Floors</option><option>Structural Framing</option></select></div>
+      <div class="fld"><select><option>Level: any</option><option>Level 1</option><option>Level 2</option><option>Level 3</option></select></div>
+    </div>
+    <div>
+      <h4>Selectable</h4>
+      <div class="fld"><select><option>All clashes</option><option>Only host-model clashes</option></select></div>
+    </div>
+  </div>`;
+}
+
+// ─── sort / select ───
+function getVal(r,key){
+  if(key==='id') return r.id;
+  if(key==='vol') return r.vol;
+  const [side,p]=key.split('.'); return r[side][p];
+}
+function sortedRows(){
+  const rows=[...CLASHES];
+  rows.sort((x,y)=>{
+    const a=getVal(x,sortState.key), b=getVal(y,sortState.key);
+    if(a<b) return -1*sortState.dir; if(a>b) return 1*sortState.dir; return 0;
+  });
+  return rows;
+}
+window.sortBy=function(key){
+  if(sortState.key===key) sortState.dir*=-1; else { sortState.key=key; sortState.dir=1; }
+  updateAll();
+};
+window.pick=function(id,ev){
+  if(ev && (ev.ctrlKey||ev.metaKey)){
+    if(selected.has(id)) selected.delete(id); else selected.add(id);
+  } else if(ev && ev.shiftKey && lastClicked!=null){
+    const ids=sortedRows().map(r=>r.id);
+    const i1=ids.indexOf(lastClicked), i2=ids.indexOf(id);
+    const [lo,hi]=[Math.min(i1,i2),Math.max(i1,i2)];
+    selected=new Set(ids.slice(lo,hi+1));
+  } else {
+    selected=new Set([id]);
+  }
+  lastClicked=id;
+  updateAll();
+};
+window.flash=function(btn){ const t=btn.textContent; btn.textContent='✓ Selected'; setTimeout(()=>btn.textContent=t,900); };
+
+function renderPreview(){
+  const rows=sortedRows();
+  const dlg=document.getElementById('dialog');
+  let body='';
+  if(state.layout==='clash-row') body=`<div class="dlg-body">${state.filter==='sidebar'?renderSidebar():''}${renderClashRowTable(rows)}</div>`;
+  else if(state.layout==='grouped') body=`<div class="dlg-body">${state.filter==='sidebar'?renderSidebar():''}${renderGrouped(rows)}</div>`;
+  else body=`<div class="dlg-body">${renderMasterDetail(rows)}</div>`;
+
+  const selCount=selected.size, canSel=selectableCount();
+  dlg.className='dialog'+(state.density?' compact':'');
+  dlg.innerHTML=`
+    <div class="dlg-title"><div class="badge">Clash Results</div>
+      <div class="chrome"><span>−</span><span>☐</span><span>✕</span></div></div>
+    ${renderToolbar(rows.length)}
+    ${body}
+    <div class="dlg-foot">
+      <span class="hint">${selCount} clash${selCount===1?'':'es'} selected · ${canSel} host-model element${canSel===1?'':'s'} selectable</span>
+      <button class="btn" ${canSel?'':'disabled'} onclick="flash(this)">Zoom to clash</button>
+      <button class="btn primary" ${canSel?'':'disabled'} onclick="flash(this)">Select in Revit${canSel?` (${canSel})`:''}</button>
+    </div>`;
+}
+
+// ─── prompt ───
+function updatePrompt(){
+  const L={'clash-row':'a single DataGrid with one row per clash, where the two clashing elements are shown as two grouped column sets labelled Element 1 / Element 2',
+    'master-detail':'a master–detail layout: a list of clashes on the left, and a detail panel on the right that expands the two clashing elements with their full parameters',
+    'grouped':'a DataGrid with grouped rows, where each clash is a collapsible group header and its two elements are sub-rows'}[state.layout];
+  const F={'colfilter':'per-column filter text boxes under each header so the user can filter by any element parameter (e.g. type "Level 2" under Element 1’s Level column)',
+    'toolbar':'a single search box plus a "Sort by" dropdown in the toolbar (sortable by either element’s Name, Category, or Level, and by overlap volume)',
+    'sidebar':'a dedicated filter sidebar on the left with per-parameter dropdowns for each element’s Category and Level'}[state.filter];
+  const M={'tint':'a light CornflowerBlue tint on its cells',
+    'badge':'a small blue "IN MODEL" badge next to its name',
+    'pin':'a location-pin icon before its name',
+    'bold':'bold accent-coloured text'}[state.marker];
+
+  const cols=['Name']; if(state.cat)cols.push('Category'); if(state.level)cols.push('Level');
+  if(state.eid)cols.push('Element ID');
+  const extra=[]; if(state.vol)extra.push('overlap volume (per clash)');
+
+  let p=`Build a Clash Results dialog as a SEPARATE modeless WPF window (ClashResultsWindow + ClashResultsViewModel, MVVM), matching the existing ClashDetectorWindow style — CornflowerBlue accent, white surface, #DDEAFF borders, Segoe UI, 5px corners. It opens after the Clash button runs detection and is handed the IReadOnlyList<ClashDto> results.\n\n`;
+  p+=`Each result is a clash between two elements. Either element may live in the currently open host model or in a linked model — so per clash, zero, one, or both elements can be in the open model. Present results as ${L}.\n\n`;
+  p+=`Do NOT assume a fixed host/linked column order. Mark whichever element is in the open model with ${M} so it reads as the selectable one; if neither element is in the open model (both linked), show no marker and treat that clash as not selectable. Columns/fields per element: ${cols.join(', ')}${extra.length?`. Plus ${extra.join(', ')}`:''}.\n\n`;
+  p+=`Filtering & sorting: ${F}. Sorting and filtering must work against the parameters of either element (e.g. sort by Element 1’s Level, filter by Element 2’s Name).\n\n`;
+  p+=`Selection & multi-select: the grid supports multi-row selection (Extended mode — Ctrl+click / Shift+click). "Select in Revit" collects the host-model element ids from ALL selected clashes and selects them together in the open document in one shot (via ExternalEvent / RequestHandler, since the dialog is modeless). Skip elements that live in linked models. The "Select in Revit" and "Zoom to clash" actions are disabled when the selection contains no host-model elements. `;
+  if(state.rowbtn) p+=`Each row also gets its own inline "Select" button, disabled when that clash has no host-model element. `;
+  p+=`\n\nData note: ClashDto must be enriched on the Revit thread (in MapToDto, where the Element objects are still available) with per-element Name, Category, Level, and an "is in open model" flag, plus the overlap volume (already computed as diffSolid.Volume in getClash but currently discarded). Status is out of scope for v1.\n\n`;
+  p+=`Density: ${state.density?'compact rows':'comfortable rows'}.`;
+  document.getElementById('prompt').textContent=p;
+}
+
+function updateAll(){ renderPreview(); updatePrompt(); }
+
+document.getElementById('copy').onclick=()=>{
+  navigator.clipboard.writeText(document.getElementById('prompt').textContent);
+  const b=document.getElementById('copy'); b.textContent='Copied!'; b.classList.add('copied');
+  setTimeout(()=>{ b.textContent='Copy Prompt'; b.classList.remove('copied'); },1200);
+};
+
+reflectControls();
+updateAll();
+</script>
+</body>
+</html>

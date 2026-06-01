@@ -1,0 +1,293 @@
+<Window
+    x:Class="ClashDetector.Views.ClashResultsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ClashDetector.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    mc:Ignorable="d"
+    MinWidth="760"
+    MinHeight="360"
+    Width="940"
+    Height="560"
+    AllowsTransparency="True"
+    Background="Transparent"
+    WindowStartupLocation="CenterScreen"
+    WindowStyle="None">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\..\Styles\StylesTotal.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Tint applied to whichever element is in the open model (selectable).
+                 Keeps a light tint + dark text even when the row is selected, so it stays readable. -->
+            <Style x:Key="CellTint1" TargetType="DataGridCell">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsElement1InOpenModel}" Value="True">
+                        <Setter Property="Background" Value="#D9E6FB"/>
+                        <Setter Property="Foreground" Value="#1A3D7C"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="CellTint2" TargetType="DataGridCell">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsElement2InOpenModel}" Value="True">
+                        <Setter Property="Background" Value="#D9E6FB"/>
+                        <Setter Property="Foreground" Value="#1A3D7C"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="ColHeaderText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Foreground" Value="#33415C"/>
+            </Style>
+            <Style x:Key="FilterBox" TargetType="TextBox">
+                <Setter Property="Margin" Value="0,3,0,0"/>
+                <Setter Property="Padding" Value="2,1"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="BorderBrush" Value="#CDD8F0"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border
+        Background="White"
+        BorderBrush="CornflowerBlue"
+        BorderThickness="1"
+        CornerRadius="5">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="48"/>
+            </Grid.RowDefinitions>
+
+            <!-- ═══ Title bar ═══ -->
+            <Border
+                Grid.Row="0"
+                BorderBrush="#DDEAFF"
+                BorderThickness="0,0,0,1"
+                Background="Transparent"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Border
+                        CornerRadius="3"
+                        BorderBrush="CornflowerBlue"
+                        BorderThickness="2"
+                        Width="150"
+                        Height="28"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            Text="Clash Results"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe UI"
+                            FontSize="13"
+                            FontWeight="Bold"/>
+                    </Border>
+
+                    <StackPanel
+                        Margin="0,0,6,0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <Button
+                            x:Name="ButtonMinimize"
+                            Width="24" Height="24"
+                            Background="Transparent" BorderBrush="Transparent"
+                            Style="{StaticResource ButtonStyleMenubar}"
+                            Click="ButtonMinimize_Click">
+                            <iconPacks:PackIconMaterial Width="9" Height="9" Margin="0,4,0,0" Kind="Minus"/>
+                        </Button>
+                        <Button
+                            x:Name="ButtonMaximize"
+                            Width="24" Height="24"
+                            Background="Transparent" BorderBrush="Transparent"
+                            Style="{StaticResource ButtonStyleMenubar}"
+                            Click="ButtonMaximize_Click">
+                            <iconPacks:PackIconMaterial Width="9" Height="9" Kind="CheckboxBlankOutline"/>
+                        </Button>
+                        <Button
+                            x:Name="ButtonClose"
+                            Width="24" Height="24"
+                            Background="Transparent" BorderBrush="Transparent"
+                            Style="{StaticResource ButtonStyleClose}"
+                            Click="ButtonClose_Click">
+                            <iconPacks:PackIconMaterial Width="9" Height="9" Kind="Close"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ═══ Toolbar ═══ -->
+            <Border
+                Grid.Row="1"
+                Background="#F5F7FF"
+                BorderBrush="#DDEAFF"
+                BorderThickness="0,0,0,1">
+                <Grid Margin="12,7">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                               FontFamily="Segoe UI" FontWeight="SemiBold" FontSize="12">
+                        <Run Text="{Binding ClashCount, Mode=OneWay}" Foreground="CornflowerBlue"/>
+                        <Run Text="clashes found"/>
+                    </TextBlock>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="13" Height="13" CornerRadius="3" Background="#1F6495ED"
+                                BorderBrush="#B9C9F5" BorderThickness="1" Margin="0,0,5,0"/>
+                        <TextBlock Text="in open model · selectable" FontSize="11" Foreground="#6677AA" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ═══ Results grid ═══ -->
+            <DataGrid
+                Grid.Row="2"
+                x:Name="ResultsGrid"
+                Margin="8"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                IsReadOnly="True"
+                HeadersVisibility="Column"
+                GridLinesVisibility="Horizontal"
+                HorizontalGridLinesBrush="#F0F3FA"
+                BorderBrush="#DDEAFF"
+                BorderThickness="1"
+                RowHeight="30"
+                SelectionMode="Extended"
+                SelectionUnit="FullRow"
+                ColumnHeaderHeight="56"
+                FontFamily="Segoe UI"
+                FontSize="12"
+                ItemsSource="{Binding ClashesView}"
+                SelectionChanged="ResultsGrid_SelectionChanged">
+                <DataGrid.Columns>
+                    <!-- Element 1 -->
+                    <DataGridTextColumn Binding="{Binding Element1Name}" SortMemberPath="Element1Name" Width="*" MinWidth="120" CellStyle="{StaticResource CellTint1}">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="Element 1 · Name" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter1Name, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Element1Category}" SortMemberPath="Element1Category" Width="Auto" MinWidth="90" CellStyle="{StaticResource CellTint1}">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="1 · Category" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter1Category, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Element1Level}" SortMemberPath="Element1Level" Width="Auto" MinWidth="70" CellStyle="{StaticResource CellTint1}">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="1 · Level" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter1Level, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding ElementId1}" SortMemberPath="ElementId1" Width="Auto" MinWidth="80" CellStyle="{StaticResource CellTint1}" FontFamily="Consolas">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="1 · Element ID" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter1Id, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+
+                    <!-- Element 2 -->
+                    <DataGridTextColumn Binding="{Binding Element2Name}" SortMemberPath="Element2Name" Width="*" MinWidth="120" CellStyle="{StaticResource CellTint2}">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="Element 2 · Name" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter2Name, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Element2Category}" SortMemberPath="Element2Category" Width="Auto" MinWidth="90" CellStyle="{StaticResource CellTint2}">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="2 · Category" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter2Category, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding Element2Level}" SortMemberPath="Element2Level" Width="Auto" MinWidth="70" CellStyle="{StaticResource CellTint2}">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="2 · Level" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter2Level, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Binding="{Binding ElementId2}" SortMemberPath="ElementId2" Width="Auto" MinWidth="80" CellStyle="{StaticResource CellTint2}" FontFamily="Consolas">
+                        <DataGridTextColumn.Header>
+                            <StackPanel>
+                                <TextBlock Text="2 · Element ID" Style="{StaticResource ColHeaderText}"/>
+                                <TextBox Style="{StaticResource FilterBox}"
+                                         Text="{Binding DataContext.Filter2Id, RelativeSource={RelativeSource AncestorType=DataGrid}, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="Overlap (cm³)" Binding="{Binding OverlapVolume, StringFormat=F1}" SortMemberPath="OverlapVolume" Width="Auto" MinWidth="90"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- ═══ Footer ═══ -->
+            <Border
+                Grid.Row="3"
+                BorderBrush="#DDEAFF"
+                BorderThickness="0,1,0,0"
+                Background="#F5F7FF">
+                <Grid Margin="12,0,8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        FontStyle="Italic"
+                        FontSize="11"
+                        Foreground="#888888"
+                        TextTrimming="CharacterEllipsis"
+                        Text="{Binding SelectionSummary}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button
+                            Height="32" Width="110" Margin="0,0,8,0"
+                            Content="Zoom to clash"
+                            Command="{Binding ZoomToClashCommand}"
+                            Style="{StaticResource SecondaryButton}"/>
+                        <Button
+                            Height="32" Width="110"
+                            Content="Select in Revit"
+                            Command="{Binding SelectInRevitCommand}"
+                            Style="{StaticResource FlatButton}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

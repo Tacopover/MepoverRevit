@@ -22,55 +22,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="..\..\Styles\StylesTotal.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!--
-                NavButton — modern sidebar nav button.
-                Tag="Selected" (set via DataTrigger below) drives the accent indicator.
-                Trigger order: hover first, then selected (later = higher precedence when both active).
-            -->
-            <Style x:Key="NavButton" TargetType="Button">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="#444444"/>
-                <Setter Property="FontFamily" Value="Segoe UI"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                <Setter Property="Height" Value="38"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Grid>
-                                <Border x:Name="Bg" Background="{TemplateBinding Background}"/>
-                                <Rectangle x:Name="Indicator"
-                                           Width="3"
-                                           HorizontalAlignment="Left"
-                                           Fill="CornflowerBlue"
-                                           Opacity="0"/>
-                                <ContentPresenter
-                                    Margin="16,0,8,0"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"/>
-                            </Grid>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="#F0F4FF"/>
-                                </Trigger>
-                                <Trigger Property="Tag" Value="Selected">
-                                    <Setter TargetName="Bg" Property="Background" Value="#EEF2FF"/>
-                                    <Setter TargetName="Indicator" Property="Opacity" Value="1"/>
-                                    <Setter Property="Foreground" Value="CornflowerBlue"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="#DCE8FF"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -81,7 +32,6 @@
         CornerRadius="5">
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="110"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
@@ -93,7 +43,6 @@
             <!-- ═══ Title bar ═══ -->
             <Border
                 Grid.Row="0"
-                Grid.ColumnSpan="2"
                 BorderBrush="#DDEAFF"
                 BorderThickness="0,0,0,1">
                 <Border
@@ -117,7 +66,6 @@
             <!-- Window chrome buttons -->
             <StackPanel
                 Grid.Row="0"
-                Grid.Column="1"
                 Margin="0,0,6,0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
@@ -148,74 +96,15 @@
                 </Button>
             </StackPanel>
 
-            <!-- ═══ Sidebar ═══ -->
-            <Border
-                Grid.Row="1"
-                Grid.Column="0"
-                Background="#F5F7FF"
-                BorderBrush="#DDEAFF"
-                BorderThickness="0,0,1,0">
-                <StackPanel Margin="0,8,0,0">
-
-                    <Button
-                        Command="{Binding NavigateToCommand}"
-                        CommandParameter="Models"
-                        Content="Models">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedButton}" Value="Models">
-                                        <Setter Property="Tag" Value="Selected"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-
-                    <Button
-                        Command="{Binding NavigateToCommand}"
-                        CommandParameter="Categories"
-                        Content="Categories">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedButton}" Value="Categories">
-                                        <Setter Property="Tag" Value="Selected"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-
-                    <Button
-                        Command="{Binding NavigateToCommand}"
-                        CommandParameter="Worksets"
-                        Content="Worksets">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource NavButton}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedButton}" Value="Worksets">
-                                        <Setter Property="Tag" Value="Selected"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-
-                </StackPanel>
-            </Border>
-
-            <!-- ═══ Content area ═══ -->
+            <!-- ═══ Content area (model selection) ═══ -->
             <ContentControl
                 Grid.Row="1"
-                Grid.Column="1"
                 Margin="6,6,6,0"
                 Content="{Binding SelectedViewModel}"/>
 
             <!-- ═══ Footer ═══ -->
             <Border
                 Grid.Row="2"
-                Grid.ColumnSpan="2"
                 BorderBrush="#DDEAFF"
                 BorderThickness="0,1,0,0"
                 Background="#F5F7FF">

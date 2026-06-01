@@ -1,0 +1,137 @@
+<common:ToolWindow
+    x:Class="ViewCreator.Views.ViewCreatorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:common="clr-namespace:MepoverSharedProject.Common"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    Width="640" Height="600" MinWidth="520" MinHeight="440"
+    AllowsTransparency="True" Background="Transparent"
+    WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResizeWithGrip">
+
+    <common:ToolWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\..\Styles\StylesTotal.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </common:ToolWindow.Resources>
+
+    <Border Background="White" BorderBrush="CornflowerBlue" BorderThickness="1" CornerRadius="5">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="44"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Border Grid.Row="0" Background="Transparent" BorderBrush="#DDEAFF" BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Border CornerRadius="3" BorderBrush="CornflowerBlue" BorderThickness="2"
+                        Width="160" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="View Creator" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontFamily="Segoe UI" FontSize="13" FontWeight="Bold"/>
+                </Border>
+            </Border>
+            <StackPanel Grid.Row="0" Margin="0,0,6,0" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                <Button Width="24" Height="24" Background="Transparent" BorderBrush="Transparent"
+                        Style="{StaticResource ButtonStyleMenubar}" Click="ButtonMinimize_Click">
+                    <iconPacks:PackIconMaterial Width="9" Height="9" Margin="0,4,0,0" Kind="Minus"/>
+                </Button>
+                <Button Width="24" Height="24" Background="Transparent" BorderBrush="Transparent"
+                        Style="{StaticResource ButtonStyleClose}" Click="ButtonClose_Click">
+                    <iconPacks:PackIconMaterial Width="9" Height="9" Kind="Close"/>
+                </Button>
+            </StackPanel>
+
+            <!-- Two checkable lists: templates + levels -->
+            <Grid Grid.Row="1" Margin="12,8,12,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="View templates" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Border Grid.Row="1" Grid.Column="0" BorderBrush="CornflowerBlue" BorderThickness="1" CornerRadius="3">
+                    <ListBox ItemsSource="{Binding Templates}" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsChecked}" Margin="2">
+                                    <TextBlock Text="{Binding Name}"/>
+                                </CheckBox>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+                <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="0,6,0,0">
+                    <Button Content="All" Width="56" Height="26" Margin="0,0,6,0"
+                            Style="{StaticResource SecondaryButton}" Command="{Binding AllTemplatesCommand}"/>
+                    <Button Content="None" Width="56" Height="26"
+                            Style="{StaticResource SecondaryButton}" Command="{Binding NoTemplatesCommand}"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Levels" FontWeight="Bold" Margin="0,0,0,4"/>
+                <Border Grid.Row="1" Grid.Column="2" BorderBrush="CornflowerBlue" BorderThickness="1" CornerRadius="3">
+                    <ListBox ItemsSource="{Binding Levels}" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsChecked}" Margin="2">
+                                    <TextBlock Text="{Binding Name}"/>
+                                </CheckBox>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+                <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal" Margin="0,6,0,0">
+                    <Button Content="All" Width="56" Height="26" Margin="0,0,6,0"
+                            Style="{StaticResource SecondaryButton}" Command="{Binding AllLevelsCommand}"/>
+                    <Button Content="None" Width="56" Height="26"
+                            Style="{StaticResource SecondaryButton}" Command="{Binding NoLevelsCommand}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Options + preview -->
+            <StackPanel Grid.Row="2" Margin="12,4,12,6">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="Floor plans" GroupName="PlanType" Margin="0,0,12,0"
+                                 IsChecked="{Binding IsFloorPlan}"/>
+                    <RadioButton Content="Ceiling plans" GroupName="PlanType"
+                                 IsChecked="{Binding IsCeilingPlan}"/>
+                    <CheckBox Content="Use level numbers" Margin="24,0,0,0" VerticalAlignment="Center"
+                              IsChecked="{Binding UseLevelNumbers}"/>
+                </StackPanel>
+                <TextBlock Margin="0,6,0,0" Foreground="#555555">
+                    <Run Text="Example name: "/>
+                    <Run Text="{Binding Preview}" FontWeight="Bold"/>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Footer -->
+            <Border Grid.Row="3" BorderBrush="#DDEAFF" BorderThickness="0,1,0,0" Background="#F5F7FF">
+                <Grid Margin="12,0,8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" FontStyle="Italic" FontSize="11"
+                               Foreground="#888888" TextTrimming="CharacterEllipsis"
+                               Text="{Binding StatusMessage}"/>
+                    <Button Grid.Column="1" Width="76" Height="30" Margin="0,0,8,0" VerticalAlignment="Center"
+                            Content="Create" Style="{StaticResource FlatButton}" Command="{Binding CreateCommand}"/>
+                    <Button Grid.Column="2" Width="70" Height="30" VerticalAlignment="Center"
+                            Content="Close" Style="{StaticResource SecondaryButton}" Command="{Binding CloseCommand}"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</common:ToolWindow>

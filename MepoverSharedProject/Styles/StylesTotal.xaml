@@ -4,19 +4,9 @@
                     xmlns:views="clr-namespace:ClashDetector.Views">
 
 
-    <DataTemplate DataType="{x:Type viewmodels:WorksetsViewModel}">
-        <views:WorksetsControl />
-    </DataTemplate>
-
     <DataTemplate DataType="{x:Type viewmodels:HostLinkViewModel}">
         <views:HostLinksControl />
     </DataTemplate>
-
-    <DataTemplate DataType="{x:Type viewmodels:CategoriesViewModel}">
-        <views:CategoriesControl />
-    </DataTemplate>
-
-
 
     <SolidColorBrush x:Key="TextBox.Static.Border" Color="#FFABAdB3"/>
     <SolidColorBrush x:Key="TextBox.MouseOver.Border" Color="#FF7EB4EA"/>

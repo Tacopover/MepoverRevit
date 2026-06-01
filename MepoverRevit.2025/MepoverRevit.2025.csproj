@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
 	  	<UseWPF>true</UseWPF>
 	  	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DefineConstants>$(DefineConstants);REVIT2025</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

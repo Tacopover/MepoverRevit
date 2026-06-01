@@ -25,20 +25,18 @@
 
     <!-- ViewModels -->
     <Compile Include="..\MepoverSharedProject\ClashDetector\ViewModels\ListItem.cs" Link="ClashDetector\ViewModels\ListItem.cs" />
-    <Compile Include="..\MepoverSharedProject\ClashDetector\ViewModels\CategoriesViewModel.cs" Link="ClashDetector\ViewModels\CategoriesViewModel.cs" />
     <Compile Include="..\MepoverSharedProject\ClashDetector\ViewModels\HostLinkViewModel.cs" Link="ClashDetector\ViewModels\HostLinkViewModel.cs" />
-    <Compile Include="..\MepoverSharedProject\ClashDetector\ViewModels\WorksetsViewModel.cs" Link="ClashDetector\ViewModels\WorksetsViewModel.cs" />
     <Compile Include="..\MepoverSharedProject\ClashDetector\ViewModels\ClashDetectorViewModel.cs" Link="ClashDetector\ViewModels\ClashDetectorViewModel.cs" />
+    <Compile Include="..\MepoverSharedProject\ClashDetector\ViewModels\ClashResultItem.cs" Link="ClashDetector\ViewModels\ClashResultItem.cs" />
+    <Compile Include="..\MepoverSharedProject\ClashDetector\ViewModels\ClashResultsViewModel.cs" Link="ClashDetector\ViewModels\ClashResultsViewModel.cs" />
 
     <!-- Views (XAML + code-behind) -->
     <Page Include="..\MepoverSharedProject\ClashDetector\Views\ClashDetectorWindow.xaml" Link="ClashDetector\Views\ClashDetectorWindow.xaml" />
     <Compile Include="..\MepoverSharedProject\ClashDetector\Views\ClashDetectorWindow.xaml.cs" Link="ClashDetector\Views\ClashDetectorWindow.xaml.cs" DependentUpon="ClashDetectorWindow.xaml" />
-    <Page Include="..\MepoverSharedProject\ClashDetector\Views\CategoriesControl.xaml" Link="ClashDetector\Views\CategoriesControl.xaml" />
-    <Compile Include="..\MepoverSharedProject\ClashDetector\Views\CategoriesControl.xaml.cs" Link="ClashDetector\Views\CategoriesControl.xaml.cs" DependentUpon="CategoriesControl.xaml" />
+    <Page Include="..\MepoverSharedProject\ClashDetector\Views\ClashResultsWindow.xaml" Link="ClashDetector\Views\ClashResultsWindow.xaml" />
+    <Compile Include="..\MepoverSharedProject\ClashDetector\Views\ClashResultsWindow.xaml.cs" Link="ClashDetector\Views\ClashResultsWindow.xaml.cs" DependentUpon="ClashResultsWindow.xaml" />
     <Page Include="..\MepoverSharedProject\ClashDetector\Views\HostLinksControl.xaml" Link="ClashDetector\Views\HostLinksControl.xaml" />
     <Compile Include="..\MepoverSharedProject\ClashDetector\Views\HostLinksControl.xaml.cs" Link="ClashDetector\Views\HostLinksControl.xaml.cs" DependentUpon="HostLinksControl.xaml" />
-    <Page Include="..\MepoverSharedProject\ClashDetector\Views\WorksetsControl.xaml" Link="ClashDetector\Views\WorksetsControl.xaml" />
-    <Compile Include="..\MepoverSharedProject\ClashDetector\Views\WorksetsControl.xaml.cs" Link="ClashDetector\Views\WorksetsControl.xaml.cs" DependentUpon="WorksetsControl.xaml" />
 
     <!-- Styles (self-contained: defines the VM->Control DataTemplates + SideBarButton) -->
     <Page Include="..\MepoverSharedProject\Styles\StylesTotal.xaml" Link="Styles\StylesTotal.xaml" />

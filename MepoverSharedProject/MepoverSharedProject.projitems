@@ -33,22 +33,19 @@
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Models\ElementCollector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\RequestHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\RevitClashService.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\CategoriesViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\HostLinkViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\ClashDetectorViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\ClashResultItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\ClashResultsViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\ListItem.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ViewModels\WorksetsViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\CategoriesControl.xaml.cs">
-      <DependentUpon>CategoriesControl.xaml</DependentUpon>
-    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\ClashDetectorWindow.xaml.cs">
       <DependentUpon>ClashDetectorWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\ClashResultsWindow.xaml.cs">
+      <DependentUpon>ClashResultsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\HostLinksControl.xaml.cs">
       <DependentUpon>HostLinksControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\WorksetsControl.xaml.cs">
-      <DependentUpon>WorksetsControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcProjectInitializer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcQuickExporter.cs" />
@@ -66,6 +63,47 @@
       <DependentUpon>SheetCopierWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)Utils.cs" />
+    <!-- Common base classes -->
+    <Compile Include="$(MSBuildThisFileDirectory)Common\IClosableViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\ToolViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\ToolWindow.cs" />
+    <!-- AlignViews -->
+    <Compile Include="$(MSBuildThisFileDirectory)AlignViews\AlignViewsCommand.cs" />
+    <!-- AlignViewports -->
+    <Compile Include="$(MSBuildThisFileDirectory)AlignViewports\AlignViewportsCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AlignViewports\SheetListItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AlignViewports\ViewModels\AlignViewportsViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AlignViewports\Views\AlignViewportsWindow.xaml.cs">
+      <DependentUpon>AlignViewportsWindow.xaml</DependentUpon>
+    </Compile>
+    <!-- ViewCreator -->
+    <Compile Include="$(MSBuildThisFileDirectory)ViewCreator\ViewCreatorCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewCreator\ViewCreateItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewCreator\ViewModels\ViewCreatorViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewCreator\Views\ViewCreatorWindow.xaml.cs">
+      <DependentUpon>ViewCreatorWindow.xaml</DependentUpon>
+    </Compile>
+    <!-- LevelChanger -->
+    <Compile Include="$(MSBuildThisFileDirectory)LevelChanger\LevelChangerCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LevelChanger\ViewModels\LevelListItem.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LevelChanger\ViewModels\LevelChangerViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LevelChanger\Views\LevelChangerWindow.xaml.cs">
+      <DependentUpon>LevelChangerWindow.xaml</DependentUpon>
+    </Compile>
+    <!-- OffsetIncrementer -->
+    <Compile Include="$(MSBuildThisFileDirectory)OffsetIncrementer\OffsetIncrementerCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OffsetIncrementer\ViewModels\OffsetRow.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OffsetIncrementer\ViewModels\OffsetIncrementerViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OffsetIncrementer\Views\OffsetIncrementerWindow.xaml.cs">
+      <DependentUpon>OffsetIncrementerWindow.xaml</DependentUpon>
+    </Compile>
+    <!-- SelectionFilter -->
+    <Compile Include="$(MSBuildThisFileDirectory)SelectionFilter\SelectionFilterCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SelectionFilter\ViewModels\FilterRow.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SelectionFilter\ViewModels\SelectionFilterViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SelectionFilter\Views\SelectionFilterWindow.xaml.cs">
+      <DependentUpon>SelectionFilterWindow.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\closeButton.png">
@@ -79,10 +117,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\CategoriesControl.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -95,11 +129,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\HostLinksControl.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\ClashResultsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\WorksetsControl.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)ClashDetector\Views\HostLinksControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -115,8 +149,34 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="$(MSBuildThisFileDirectory)AlignViewports\Views\AlignViewportsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)ViewCreator\Views\ViewCreatorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)LevelChanger\Views\LevelChangerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)OffsetIncrementer\Views\OffsetIncrementerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)SelectionFilter\Views\SelectionFilterWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\SheetCopier.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\AV.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\VA.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\VC.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\LevelChanger.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\OffIncrem.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\SF.png" />
   </ItemGroup>
 </Project>

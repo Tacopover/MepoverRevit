@@ -72,6 +72,16 @@ namespace ClashDetector
                             helperMethods.RunRevitAction();
                             break;
                         }
+                    case RequestId.SelectElements:
+                        {
+                            helperMethods.SelectElementsAction();
+                            break;
+                        }
+                    case RequestId.ZoomElements:
+                        {
+                            helperMethods.ZoomElementsAction();
+                            break;
+                        }
 
 
                     default:
@@ -110,6 +120,16 @@ namespace ClashDetector
             revitService.ExecuteClashRun();
         }
 
+        public void SelectElementsAction()
+        {
+            revitService.ExecuteSelectInOpenModel();
+        }
+
+        public void ZoomElementsAction()
+        {
+            revitService.ExecuteZoomTo();
+        }
+
 
     }
     public enum RequestId : int
@@ -121,6 +141,10 @@ namespace ClashDetector
         ToggleFamilyLoaderEvent = 2,
 
         ToggleFamilyLoadingEvent = 3,
+
+        SelectElements = 4,
+
+        ZoomElements = 5,
     }
 
 

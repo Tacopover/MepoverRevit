@@ -13,17 +13,9 @@ namespace ClashDetector.Tests
         }
 
         [Fact]
-        public void Constructor_starts_on_categories_view()
+        public void Constructor_starts_on_model_selection_view()
         {
             var vm = CreateViewModel();
-            Assert.IsType<CategoriesViewModel>(vm.SelectedViewModel);
-        }
-
-        [Fact]
-        public void NavigateTo_models_switches_to_host_link_view()
-        {
-            var vm = CreateViewModel();
-            vm.NavigateToCommand.Execute("Models");
             Assert.IsType<HostLinkViewModel>(vm.SelectedViewModel);
         }
 
@@ -32,7 +24,22 @@ namespace ClashDetector.Tests
         {
             var vm = CreateViewModel();
             await vm.RunClashesAsync();
-            Assert.Equal("2 clashes found", vm.StatusMessage);
+            Assert.Equal("6 clashes found", vm.StatusMessage);
+        }
+
+        [Fact]
+        public async Task RunClashesAsync_warns_when_no_models_selected_on_a_side()
+        {
+            var service = new MockClashService();
+            foreach (var m in service.Settings.RevitModels2)
+            {
+                m.IsSelected = false;
+            }
+            var vm = new ClashDetectorViewModel(service);
+
+            await vm.RunClashesAsync();
+
+            Assert.Contains("Select at least one model", vm.StatusMessage);
         }
     }
 }

@@ -15,6 +15,9 @@ namespace ClashDetector.Models
         public double Rotation { get; set; }
         public string TypeOfClash;
 
+        // Intersection volume in Revit internal units (ft³).
+        public double OverlapVolume { get; set; }
+
 
         public Clash(Document document1, Document document2, Element element1, Element element2, XYZ location_ft, double rotation = 0)
         {

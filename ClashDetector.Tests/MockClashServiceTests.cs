@@ -8,11 +8,11 @@ namespace ClashDetector.Tests
     public class MockClashServiceTests
     {
         [Fact]
-        public async Task RunClashesAsync_returns_two_sample_clashes()
+        public async Task RunClashesAsync_returns_sample_clashes()
         {
             var service = new MockClashService();
             var clashes = await service.RunClashesAsync();
-            Assert.Equal(2, clashes.Count);
+            Assert.Equal(6, clashes.Count);
         }
 
         [Fact]

@@ -44,13 +44,5 @@ namespace ClashDetector
                 return Result.Failed;
             }
         }
-
-        public static void CreatePanelButton(RibbonPanel ribbonPanel)
-        {
-            string thisAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            PushButtonData ccData = new PushButtonData("SC", "SheetCopier", thisAssemblyPath, typeof(ClashDetectorCommand).FullName);
-            PushButton ccButton = ribbonPanel.AddItem(ccData) as PushButton;
-            ccButton.ToolTip = "Start SheetCopier";
-        }
     }
 }

@@ -33,7 +33,9 @@
       "Bash(Select-String \"error|Build succeeded|FAILED\")",
       "Bash(Get-ChildItem \"C:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverSharedProject\\\\IfcExport\" -Filter \"*.cs\")",
       "Bash(Select-Object Name)",
-      "Bash(\"C:/Users/taco/.claude/plugins/cache/claude-plugins-official/superpowers/f2cbfbefebbf/skills/brainstorming/scripts/start-server.sh\" --project-dir \"c:/Users/taco/source/repos/MepoverRevit\")"
+      "Bash(\"C:/Users/taco/.claude/plugins/cache/claude-plugins-official/superpowers/f2cbfbefebbf/skills/brainstorming/scripts/start-server.sh\" --project-dir \"c:/Users/taco/source/repos/MepoverRevit\")",
+      "Bash(dotnet test *)",
+      "PowerShell($f=\"c:\\\\Users\\\\taco\\\\source\\\\repos\\\\MepoverRevit\\\\MepoverSharedProject\\\\ClashDetector\\\\Models\\\\ElementCollector.cs\"; $i=0; Get-Content $f | ForEach-Object { $i++; \"{0,3}: {1}\" -f $i,$_ })"
     ],
     "additionalDirectories": [
       "c:\\Users\\taco\\.claude\\projects\\c--Users-taco-source-repos-MepoverRevit\\memory"

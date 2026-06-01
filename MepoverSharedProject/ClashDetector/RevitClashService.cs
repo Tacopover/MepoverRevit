@@ -38,106 +38,69 @@ namespace ClashDetector
             PopulateSettings();
         }
 
+        // Collects element ids whose solid could not be built, so the run can report once
+        // at the end instead of popping a MessageBox per element.
+        private List<string> _solidErrors;
+
         public List<Clash> RunClashes()
         {
             ElementCollector collector = new ElementCollector(UIApp.ActiveUIDocument);
             Dictionary<string, List<Element>> ModelMap = collector.GetVisibleElements();
 
-            List<string> docTitlesA = Settings.RevitModels1.Where(cat => cat.IsSelected).Select(cat => cat.Name).ToList();
-            List<string> docTitlesB = Settings.RevitModels2.Where(cat => cat.IsSelected).Select(cat => cat.Name).ToList();
+            List<string> docTitlesA = Settings.RevitModels1.Where(m => m.IsSelected).Select(m => m.Name).ToList();
+            List<string> docTitlesB = Settings.RevitModels2.Where(m => m.IsSelected).Select(m => m.Name).ToList();
 
             List<Clash> clashes = new List<Clash>();
+            _solidErrors = new List<string>();
+            // De-duplicates unordered pairs so an A-B and the mirrored B-A test report once.
+            HashSet<string> seenPairs = new HashSet<string>();
 
             foreach (string titleA in docTitlesA)
             {
-                List<Element> startElementsA;
-                if (!ModelMap.TryGetValue(titleA, out startElementsA))
+                if (!ModelMap.TryGetValue(titleA, out List<Element> elementsA))
                 {
                     continue;
                 }
-
-                List<Element> elementsA = new List<Element>();
-                if (Settings.IsCategoriesEnabled)
-                {
-                    foreach (string category in Settings.Categories1.Where(cat => cat.IsSelected).Select(cat => cat.Name).ToList())
-                    {
-                        List<Element> elements = startElementsA.Where(e => e.Category.Name == category).ToList();
-                        if (elements.Count > 0)
-                        {
-                            elementsA.AddRange(elements);
-                        }
-                    }
-                }
-                else
-                {
-                    elementsA = startElementsA;
-                }
-
-
-                Document documentA;
-                RevitLinkInstance linkInstanceA;
-                Transform tranformA;
-                if (RevitLinkInstanceMap.TryGetValue(titleA, out linkInstanceA))
-                {
-                    tranformA = linkInstanceA.GetTotalTransform();
-                }
-                else
-                {
-                    tranformA = Transform.Identity;
-                }
-
-                if (!DocumentMap.TryGetValue(titleA, out documentA))
+                if (!DocumentMap.TryGetValue(titleA, out Document documentA))
                 {
                     continue;
                 }
+                Transform transformA = RevitLinkInstanceMap.TryGetValue(titleA, out RevitLinkInstance linkInstanceA)
+                    ? linkInstanceA.GetTotalTransform()
+                    : Transform.Identity;
 
                 foreach (string titleB in docTitlesB)
                 {
-                    List<Element> startElementsB;
-                    if (!ModelMap.TryGetValue(titleB, out startElementsB))
+                    if (!ModelMap.TryGetValue(titleB, out List<Element> elementsB))
                     {
                         continue;
                     }
-
-                    List<Element> elementsB = new List<Element>();
-                    if (Settings.IsCategoriesEnabled)
-                    {
-                        foreach (string category in Settings.Categories1.Where(cat => cat.IsSelected).Select(cat => cat.Name).ToList())
-                        {
-                            List<Element> elements = startElementsB.Where(e => e.Category.Name == category).ToList();
-                            if (elements.Count > 0)
-                            {
-                                elementsB.AddRange(elements);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        elementsB = startElementsB;
-                    }
-
-                    Document documentB;
-                    RevitLinkInstance linkInstanceB;
-                    Transform tranformB;
-                    if (RevitLinkInstanceMap.TryGetValue(titleB, out linkInstanceB))
-                    {
-                        tranformB = linkInstanceB.GetTotalTransform();
-                    }
-                    else
-                    {
-                        tranformB = Transform.Identity;
-                    }
-
-                    if (!DocumentMap.TryGetValue(titleB, out documentB))
+                    if (!DocumentMap.TryGetValue(titleB, out Document documentB))
                     {
                         continue;
                     }
+                    Transform transformB = RevitLinkInstanceMap.TryGetValue(titleB, out RevitLinkInstance linkInstanceB)
+                        ? linkInstanceB.GetTotalTransform()
+                        : Transform.Identity;
+
+                    bool sameModel = titleA == titleB;
 
                     foreach (Element elementA in elementsA)
                     {
                         foreach (Element elementB in elementsB)
                         {
-                            Clash clash = getClash(documentA, documentB, elementA, elementB, tranformA, tranformB);
+                            // An element never clashes with itself.
+                            if (sameModel && GetIdValue(elementA.Id) == GetIdValue(elementB.Id))
+                            {
+                                continue;
+                            }
+
+                            if (!seenPairs.Add(PairKey(titleA, elementA.Id, titleB, elementB.Id)))
+                            {
+                                continue;
+                            }
+
+                            Clash clash = getClash(documentA, documentB, elementA, elementB, transformA, transformB);
                             if (clash != null)
                             {
                                 clashes.Add(clash);
@@ -145,135 +108,126 @@ namespace ClashDetector
                         }
                     }
                 }
-
             }
             return clashes;
-
         }
 
+        // Order-independent key for an element pair, so {A,B} and {B,A} collapse to one entry.
+        private string PairKey(string titleA, ElementId idA, string titleB, ElementId idB)
+        {
+            string a = titleA + ":" + GetIdValue(idA);
+            string b = titleB + ":" + GetIdValue(idB);
+            return string.CompareOrdinal(a, b) <= 0 ? a + "|" + b : b + "|" + a;
+        }
 
+        // Symmetric, location-independent clash test: broad-phase on world-aligned bounding
+        // boxes, narrow-phase on the boolean intersection of both solids. Either element may
+        // lack a Location (floors, slabs, in-place families) — geometry, not Location, drives it.
         private Clash getClash(Document doc1, Document doc2, Element element1, Element element2, Transform transformLink1, Transform transformLink2)
         {
-            Clash clash = null;
-            MEPCurve mepcurve = element2 as MEPCurve;
-
-            BoundingBoxXYZ bboxSub = element2.get_BoundingBox(null);
-            if (bboxSub == null)
+            BoundingBoxXYZ bbox1 = element1.get_BoundingBox(null);
+            BoundingBoxXYZ bbox2 = element2.get_BoundingBox(null);
+            if (bbox1 == null || bbox2 == null)
             {
-                return clash;
+                return null;
             }
-            BoundingBoxXYZ bboxAlignedSub = new BoundingBoxXYZ();
-            bboxAlignedSub.Min = transformLink2.OfPoint(bboxSub.Min);
-            bboxAlignedSub.Max = transformLink2.OfPoint(bboxSub.Max);
-            XYZ location_ft = null;
-            double rotation = 0;
-
-            Location location = element2.Location;
-            if (location == null)
+            if (!BboxIntersects(TransformBbox(bbox1, transformLink1), TransformBbox(bbox2, transformLink2)))
             {
-                return clash;
-            }
-            if (location is LocationPoint)
-            {
-                LocationPoint locationSub = element2.Location as LocationPoint;
-                rotation = locationSub.Rotation;
-            }
-            else if (location is LocationCurve)
-            {
-                LocationCurve locationSub = element2.Location as LocationCurve;
-                Line curveSub = GetElementCurve(element2) as Line;
-                if (curveSub == null)
-                {
-                    return clash;
-                }
-                XYZ direction = curveSub.Direction;
-                double dotProduct = direction.DotProduct(XYZ.BasisY);
-                rotation = Math.Acos(dotProduct);
-            }
-            else
-            {
-                return clash;
+                return null;
             }
 
-
-            BoundingBoxXYZ bboxSuper = element1.get_BoundingBox(null);
-            if (bboxSuper == null)
+            Solid originSolid1 = TryGetSolid(element1, doc1) ?? SolidByBoundingBox(bbox1);
+            Solid originSolid2 = TryGetSolid(element2, doc2) ?? SolidByBoundingBox(bbox2);
+            if (originSolid1 == null || originSolid2 == null)
             {
-                return clash;
-            }
-            BoundingBoxXYZ bboxAlignedSuper = new BoundingBoxXYZ();
-
-            bboxAlignedSuper.Min = transformLink1.OfPoint(bboxSuper.Min);
-            bboxAlignedSuper.Max = transformLink1.OfPoint(bboxSuper.Max);
-            Solid subSolid = null;
-            Solid superSolid = null;
-            Solid diffSolid = null;
-
-            if (!BboxIntersects(bboxAlignedSub, bboxAlignedSuper))
-            {
-                return clash;
+                return null;
             }
 
-            string clashType = element1.Category.ToString();
-            //check for intersection with solids to make sure they actually clash // TODO getElementSolid in a try/catch
-            Solid originSubSolid = null;
+            Solid solid1 = SolidUtils.CreateTransformed(originSolid1, transformLink1);
+            Solid solid2 = SolidUtils.CreateTransformed(originSolid2, transformLink2);
+
+            Solid diffSolid;
             try
             {
-                originSubSolid = GetElementSolid(element2, geomOptions);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Could not clash due to error in creating solid from element: " + element2.Id + " in " + doc2.Title);
-            }
-
-            if (originSubSolid == null)
-            {
-                //use boundingbox for creating solid. Less accurate but better than nothing.
-                BoundingBoxXYZ originBboxSub = element2.get_BoundingBox(null);
-                originSubSolid = SolidByBoundingBox(originBboxSub);
-            }
-            Solid originSuperSolid = null;
-            try
-            {
-                originSuperSolid = GetElementSolid(element1, geomOptions);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Could not get element solid");
-            }
-            if (originSuperSolid == null)
-            {
-                //use boundingbox for creating solid. Less accurate but better than nothing.
-                BoundingBoxXYZ originBboxSuper = element1.get_BoundingBox(null);
-                originSuperSolid = SolidByBoundingBox(originBboxSuper);
-            }
-            subSolid = SolidUtils.CreateTransformed(originSubSolid, transformLink2);
-            superSolid = SolidUtils.CreateTransformed(originSuperSolid, transformLink1);
-            //TODO use a geometry engine that does not throw errors when calculating solid intersections
-            try
-            {
-                diffSolid = BooleanOperationsUtils.ExecuteBooleanOperation(subSolid, superSolid, BooleanOperationsType.Intersect);
+                diffSolid = BooleanOperationsUtils.ExecuteBooleanOperation(solid1, solid2, BooleanOperationsType.Intersect);
             }
             catch (Autodesk.Revit.Exceptions.InvalidOperationException)
             {
-                //TODO write elements to error report for user
-                return clash;
-            }
-            //TODO what to do with really small diffSolids? could be a really small clash between 2 bigger elements or a really small subElement that can be ignored
-            // f.i. pipe/duct fitting placeholders or information carriers.
-            if (diffSolid.Volume > 0.00001)
-            {
-                location_ft = diffSolid.ComputeCentroid();
-            }
-            if (location_ft == null)
-            {
-                return clash;
+                _solidErrors?.Add($"{doc1?.Title}/{doc2?.Title}: intersection failed for {GetIdValue(element1.Id)} vs {GetIdValue(element2.Id)}");
+                return null;
             }
 
-            clash = new Clash(doc1, doc2, element1, element2, location_ft, rotation);
+            // Ignore vanishingly small overlaps (placeholders, touching faces).
+            if (diffSolid == null || diffSolid.Volume <= 0.00001)
+            {
+                return null;
+            }
 
-            clash.TypeOfClash = clashType;
+            XYZ location_ft = diffSolid.ComputeCentroid();
+            Clash clash = new Clash(doc1, doc2, element1, element2, location_ft, GetElementRotation(element2));
+            clash.TypeOfClash = element1.Category?.ToString();
+            clash.OverlapVolume = diffSolid.Volume;
             return clash;
+        }
+
+        // Best-effort orientation of an element, for reporting only. 0 when it has no Location.
+        private double GetElementRotation(Element element)
+        {
+            Location location = element.Location;
+            if (location is LocationPoint locationPoint)
+            {
+                return locationPoint.Rotation;
+            }
+            if (location is LocationCurve && GetElementCurve(element) is Line line)
+            {
+                return Math.Acos(line.Direction.DotProduct(XYZ.BasisY));
+            }
+            return 0;
+        }
+
+        private Solid TryGetSolid(Element element, Document doc)
+        {
+            try
+            {
+                return GetElementSolid(element, geomOptions);
+            }
+            catch (Exception)
+            {
+                _solidErrors?.Add($"{doc?.Title}: could not build solid for element {GetIdValue(element.Id)}");
+                return null;
+            }
+        }
+
+        // World-aligned bounding box: transforms all 8 corners so a rotated link transform
+        // still yields a valid (min <= max) axis-aligned box for the broad-phase test.
+        private BoundingBoxXYZ TransformBbox(BoundingBoxXYZ box, Transform transform)
+        {
+            XYZ[] corners =
+            {
+                new XYZ(box.Min.X, box.Min.Y, box.Min.Z),
+                new XYZ(box.Max.X, box.Min.Y, box.Min.Z),
+                new XYZ(box.Min.X, box.Max.Y, box.Min.Z),
+                new XYZ(box.Min.X, box.Min.Y, box.Max.Z),
+                new XYZ(box.Max.X, box.Max.Y, box.Min.Z),
+                new XYZ(box.Max.X, box.Min.Y, box.Max.Z),
+                new XYZ(box.Min.X, box.Max.Y, box.Max.Z),
+                new XYZ(box.Max.X, box.Max.Y, box.Max.Z),
+            };
+            XYZ min = null;
+            XYZ max = null;
+            foreach (XYZ corner in corners)
+            {
+                XYZ p = transform.OfPoint(corner);
+                if (min == null)
+                {
+                    min = p;
+                    max = p;
+                    continue;
+                }
+                min = new XYZ(Math.Min(min.X, p.X), Math.Min(min.Y, p.Y), Math.Min(min.Z, p.Z));
+                max = new XYZ(Math.Max(max.X, p.X), Math.Max(max.Y, p.Y), Math.Max(max.Z, p.Z));
+            }
+            return new BoundingBoxXYZ { Min = min, Max = max };
         }
 
         private void PopulateSettings()
@@ -430,6 +384,11 @@ namespace ClashDetector
             {
                 List<Clash> clashes = RunClashes();
                 IReadOnlyList<ClashDto> dtos = clashes.Select(MapToDto).ToList();
+                if (_solidErrors != null && _solidErrors.Count > 0)
+                {
+                    TaskDialog.Show("Clash Detector",
+                        $"{_solidErrors.Count} element(s) could not be processed and were approximated by their bounding box or skipped.");
+                }
                 _runTcs?.TrySetResult(dtos);
             }
             catch (Exception ex)
@@ -438,20 +397,77 @@ namespace ClashDetector
             }
         }
 
-        private static ClashDto MapToDto(Clash clash)
+        // ft³ -> cm³
+        private const double CubicFeetToCubicCentimetres = 28316.846592;
+
+        private ClashDto MapToDto(Clash clash)
         {
+            string openTitle = doc?.Title;
             return new ClashDto
             {
                 ElementId1 = GetIdValue(clash.Element1.Id),
                 ElementId2 = GetIdValue(clash.Element2.Id),
                 Document1 = clash.Document1?.Title,
                 Document2 = clash.Document2?.Title,
+                ElementName1 = clash.Element1?.Name,
+                ElementName2 = clash.Element2?.Name,
+                Category1 = clash.Element1?.Category?.Name,
+                Category2 = clash.Element2?.Category?.Name,
+                Level1 = GetLevelName(clash.Document1, clash.Element1),
+                Level2 = GetLevelName(clash.Document2, clash.Element2),
+                IsInOpenModel1 = openTitle != null && clash.Document1?.Title == openTitle,
+                IsInOpenModel2 = openTitle != null && clash.Document2?.Title == openTitle,
                 TypeOfClash = clash.TypeOfClash,
+                OverlapVolume = clash.OverlapVolume * CubicFeetToCubicCentimetres,
                 X = clash.RevitPoint?.X ?? 0,
                 Y = clash.RevitPoint?.Y ?? 0,
                 Z = clash.RevitPoint?.Z ?? 0,
                 Rotation = clash.Rotation,
             };
+        }
+
+        private static string GetLevelName(Document document, Element element)
+        {
+            if (document == null || element == null)
+            {
+                return null;
+            }
+
+            ElementId levelId = element.LevelId;
+            if (levelId != null && levelId != ElementId.InvalidElementId)
+            {
+                Level direct = document.GetElement(levelId) as Level;
+                if (direct != null)
+                {
+                    return direct.Name;
+                }
+            }
+
+            BuiltInParameter[] levelParams =
+            {
+                BuiltInParameter.RBS_START_LEVEL_PARAM,
+                BuiltInParameter.FAMILY_LEVEL_PARAM,
+                BuiltInParameter.SCHEDULE_LEVEL_PARAM,
+                BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM,
+                BuiltInParameter.INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM,
+            };
+            foreach (BuiltInParameter bip in levelParams)
+            {
+                Parameter p = element.get_Parameter(bip);
+                if (p != null && p.StorageType == StorageType.ElementId)
+                {
+                    ElementId id = p.AsElementId();
+                    if (id != null && id != ElementId.InvalidElementId)
+                    {
+                        Level lvl = document.GetElement(id) as Level;
+                        if (lvl != null)
+                        {
+                            return lvl.Name;
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         private static long GetIdValue(ElementId id)
@@ -463,10 +479,55 @@ namespace ClashDetector
 #endif
         }
 
+        private static ElementId MakeElementId(long value)
+        {
+#if REVIT2025
+            return new ElementId(value);
+#else
+            return new ElementId((int)value);
+#endif
+        }
+
         public void MakeRequest(RequestId request)
         {
             handler.Request.Make(request);
             exEvent.Raise();
+        }
+
+        private List<long> _pendingSelectionIds;
+
+        public void SelectInOpenModel(IEnumerable<long> elementIds)
+        {
+            _pendingSelectionIds = elementIds?.ToList() ?? new List<long>();
+            MakeRequest(RequestId.SelectElements);
+        }
+
+        public void ZoomTo(IEnumerable<long> elementIds)
+        {
+            _pendingSelectionIds = elementIds?.ToList() ?? new List<long>();
+            MakeRequest(RequestId.ZoomElements);
+        }
+
+        internal void ExecuteSelectInOpenModel()
+        {
+            UIDocument uidoc = UIApp.ActiveUIDocument;
+            if (uidoc == null || _pendingSelectionIds == null)
+            {
+                return;
+            }
+            ICollection<ElementId> ids = _pendingSelectionIds.Select(MakeElementId).ToList();
+            uidoc.Selection.SetElementIds(ids);
+        }
+
+        internal void ExecuteZoomTo()
+        {
+            UIDocument uidoc = UIApp.ActiveUIDocument;
+            if (uidoc == null || _pendingSelectionIds == null || _pendingSelectionIds.Count == 0)
+            {
+                return;
+            }
+            ICollection<ElementId> ids = _pendingSelectionIds.Select(MakeElementId).ToList();
+            uidoc.ShowElements(ids);
         }
     }
 }
