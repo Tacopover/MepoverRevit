@@ -36,6 +36,7 @@
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
@@ -96,15 +97,29 @@
                 </Button>
             </StackPanel>
 
+            <!-- ═══ Info text ═══ -->
+            <Border
+                Grid.Row="1"
+                Background="#F0F5FF"
+                BorderBrush="#DDEAFF"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+                <TextBlock
+                    FontSize="11"
+                    Foreground="#555577"
+                    TextWrapping="Wrap"
+                    Text="Elements visible in the currently active view will be checked for clashes. Select a model on each side (A and B) below, then press Clash."/>
+            </Border>
+
             <!-- ═══ Content area (model selection) ═══ -->
             <ContentControl
-                Grid.Row="1"
+                Grid.Row="2"
                 Margin="6,6,6,0"
                 Content="{Binding SelectedViewModel}"/>
 
             <!-- ═══ Footer ═══ -->
             <Border
-                Grid.Row="2"
+                Grid.Row="3"
                 BorderBrush="#DDEAFF"
                 BorderThickness="0,1,0,0"
                 Background="#F5F7FF">

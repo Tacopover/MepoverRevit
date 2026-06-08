@@ -1,9 +1,9 @@
-using System;
-using System.IO;
-using System.Reflection;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using IfcExport;
+using System;
+using System.IO;
+using System.Reflection;
 using Utilities;
 
 namespace MepoverSharedProject
@@ -24,21 +24,23 @@ namespace MepoverSharedProject
             // ── Models panel ──────────────────────────────────────────────────
             RibbonPanel models = application.CreateRibbonPanel(Tab, "Models");
 
-            var sc = models.AddItem(new PushButtonData("SC", "Sheet\nCopier", path, "SheetCopier.RevitCommand")) as PushButton;
-            sc.ToolTip = "Start SheetCopier";
-            sc.LargeImage = Utils.LoadEmbeddedImage(assembly, "SheetCopier.png");
-
             var ifc = models.AddItem(new PushButtonData("IFCExport", "IFC\nExport", path, "IfcExport.IfcExportCommand")) as PushButton;
             ifc.ToolTip = "Start incremental IFC export during idle time";
+            ifc.LargeImage = Utils.LoadEmbeddedImage(assembly, "IfcExport.png");
 
             var wsTest = models.AddItem(new PushButtonData("WsChangeTest", "WS Change\nTest", path, "IfcExport.WsChangeTestCommand")) as PushButton;
             wsTest.ToolTip = "Toggle worksharing change event monitor";
 
             var clash = models.AddItem(new PushButtonData("ClashDetector", "Clash\nDetector", path, "ClashDetector.ClashDetectorCommand")) as PushButton;
             clash.ToolTip = "Detect clashes between models visible in the active view";
+            clash.LargeImage = Utils.LoadEmbeddedImage(assembly, "ClashDetector.png");
 
             // ── Sheets & Views panel ──────────────────────────────────────────
             RibbonPanel sheets = application.CreateRibbonPanel(Tab, "Sheets & Views");
+
+            var sc = sheets.AddItem(new PushButtonData("SC", "Sheet\nCopier", path, "SheetCopier.RevitCommand")) as PushButton;
+            sc.ToolTip = "Start SheetCopier";
+            sc.LargeImage = Utils.LoadEmbeddedImage(assembly, "SheetCopier.png");
 
             var vc = sheets.AddItem(new PushButtonData("ViewCreator", "View\nCreator", path, "ViewCreator.ViewCreatorCommand")) as PushButton;
             vc.ToolTip = "Bulk-create floor/ceiling plan views from templates and levels";
