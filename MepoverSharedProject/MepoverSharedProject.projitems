@@ -10,6 +10,7 @@
     </Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Polyfills.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcElementWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportCommand.cs" />
@@ -178,5 +179,7 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\LevelChanger.png" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\OffIncrem.png" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\SF.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\ClashDetector.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\IfcExport.png" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,14 @@
+{
+  "folders": [
+	{
+		"path": "."
+	},
+	{
+		"path": "../MEPoverRibbon"
+	}
+],
+  "settings": {
+    "dotnet.preferCSharpExtension": true,
+    "dotnet.defaultSolution": "MepoverRevit/MepoverRevit.sln"
+  }
+}

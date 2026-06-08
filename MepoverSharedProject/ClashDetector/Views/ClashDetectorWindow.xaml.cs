@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using ClashDetector.ViewModels;
 
 // The User Control item template is documented at https://go.microsoft.com/fwlink/?LinkId=234236
@@ -13,6 +14,8 @@ namespace ClashDetector.Views
     public sealed partial class ClashDetectorWindow : Window
     {
         private ClashResultsWindow _resultsWindow;
+
+        public IntPtr RevitMainWindowHandle { get; set; }
 
         public ClashDetectorWindow()
         {
@@ -38,12 +41,18 @@ namespace ClashDetector.Views
             {
                 _resultsWindow.DataContext = resultsViewModel;
                 _resultsWindow.Activate();
-                return;
+            }
+            else
+            {
+                _resultsWindow = new ClashResultsWindow { DataContext = resultsViewModel };
+                if (RevitMainWindowHandle != IntPtr.Zero)
+                    new WindowInteropHelper(_resultsWindow).Owner = RevitMainWindowHandle;
+                _resultsWindow.Closed += (s, e) => _resultsWindow = null;
+                _resultsWindow.Show();
             }
 
-            _resultsWindow = new ClashResultsWindow { DataContext = resultsViewModel, Owner = this };
-            _resultsWindow.Closed += (s, e) => _resultsWindow = null;
-            _resultsWindow.Show();
+            // Close the setup window — results window is now parented to Revit directly
+            Close();
         }
 
         private void ButtonMinimize_Click(object sender, RoutedEventArgs e)

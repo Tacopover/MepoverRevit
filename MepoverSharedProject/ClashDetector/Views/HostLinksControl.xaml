@@ -20,12 +20,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Selected models will be clashed against each other in the active view" 
-           TextWrapping="Wrap"
-           HorizontalAlignment="Center" 
-           Grid.ColumnSpan="2" 
-           VerticalAlignment="Top" FontStyle="Italic" FontSize="12"/>
-
         <TextBlock Text="Models A" 
            ToolTip="Select group A models to clash with group B models"
            HorizontalAlignment="Left" 

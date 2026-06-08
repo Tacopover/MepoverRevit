@@ -31,7 +31,7 @@ namespace ClashDetector
                 _service.Initialize();
 
                 var viewModel = new ClashDetectorViewModel(_service);
-                _window = new ClashDetectorWindow { DataContext = viewModel };
+                _window = new ClashDetectorWindow { DataContext = viewModel, RevitMainWindowHandle = uiApp.MainWindowHandle };
                 new WindowInteropHelper(_window).Owner = uiApp.MainWindowHandle;
                 _window.Closed += (s, e) => _window = null;
                 _window.Show();
