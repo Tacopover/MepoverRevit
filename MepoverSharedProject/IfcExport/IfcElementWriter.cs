@@ -127,6 +127,101 @@ namespace IfcExport
             }
         }
 
+        // ------------------------------------------------------------------ extraction (Revit main thread only)
+
+        /// <summary>
+        /// Reads all Revit API data needed to write an IFC element and packages it into a plain DTO.
+        /// Returns null when the element has no exportable solid geometry or on any error.
+        /// MUST be called on the Revit main thread — uses get_Geometry and face.Triangulate.
+        /// The returned DTO contains no Revit API objects and is safe to enqueue for background processing.
+        /// </summary>
+        public static ElementGeometryDto ExtractDto(Element element, IList<PsetMappingBlock> psetMappings)
+        {
+            if (element == null) return null;
+            try
+            {
+                List<Solid> solids = ExtractSolids(element);
+                if (solids.Count == 0) return null;
+
+                var solidData = new List<List<Triangle3d>>();
+                foreach (Solid solid in solids)
+                {
+                    var triangles = new List<Triangle3d>();
+                    foreach (Face face in solid.Faces)
+                    {
+                        Mesh mesh = face.Triangulate();
+                        if (mesh == null || mesh.NumTriangles == 0) continue;
+                        for (int t = 0; t < mesh.NumTriangles; t++)
+                        {
+                            MeshTriangle tri = mesh.get_Triangle(t);
+                            XYZ v0 = tri.get_Vertex(0), v1 = tri.get_Vertex(1), v2 = tri.get_Vertex(2);
+                            triangles.Add(new Triangle3d(
+                                v0.X * FeetToMetres, v0.Y * FeetToMetres, v0.Z * FeetToMetres,
+                                v1.X * FeetToMetres, v1.Y * FeetToMetres, v1.Z * FeetToMetres,
+                                v2.X * FeetToMetres, v2.Y * FeetToMetres, v2.Z * FeetToMetres));
+                        }
+                    }
+                    if (triangles.Count > 0)
+                        solidData.Add(triangles);
+                }
+                if (solidData.Count == 0) return null;
+
+                return new ElementGeometryDto
+                {
+                    UniqueId      = element.UniqueId,
+                    ElementId     = element.Id,
+                    Name          = element.Name ?? element.Category?.Name ?? "Element",
+                    CategoryId    = element.Category?.Id?.IntegerValue ?? 0,
+                    LevelId       = GetLevelId(element),
+                    ExportToIfcAs = GetExportToIfcAs(element),
+                    Solids        = solidData,
+                    PropertySets  = ExtractPsetData(element, psetMappings)
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    string.Format("IfcElementWriter.ExtractDto skipped '{0}' (id {1}): {2}",
+                        element?.Name, element?.Id, ex.Message));
+                return null;
+            }
+        }
+
+        private static List<PsetData> ExtractPsetData(Element element, IList<PsetMappingBlock> mappings)
+        {
+            var result = new List<PsetData>();
+            if (mappings == null || mappings.Count == 0) return result;
+
+            foreach (PsetMappingBlock block in mappings)
+            {
+                var resolved   = new System.Collections.Generic.HashSet<string>();
+                var properties = new List<PropertyData>();
+
+                foreach (PsetPropertyMapping mapping in block.Properties)
+                {
+                    if (resolved.Contains(mapping.IfcPropertyName)) continue;
+                    string value = TryGetRevitParameterValue(element, mapping.RevitParameterName);
+                    if (string.IsNullOrEmpty(value)) continue;
+                    resolved.Add(mapping.IfcPropertyName);
+                    properties.Add(new PropertyData
+                    {
+                        IfcPropertyName = mapping.IfcPropertyName,
+                        DataType        = mapping.DataType,
+                        Value           = value
+                    });
+                }
+
+                if (properties.Count > 0)
+                    result.Add(new PsetData
+                    {
+                        PsetName       = block.PsetName,
+                        IfcTypeFilters = new List<string>(block.IfcTypeFilters),
+                        Properties     = properties
+                    });
+            }
+            return result;
+        }
+
         // ------------------------------------------------------------------ geometry extraction
 
         private static List<Solid> ExtractSolids(Element elem)
