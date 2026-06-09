@@ -226,7 +226,9 @@ namespace IfcExport
 
         /// <summary>
         /// Writes a pre-extracted <see cref="ElementGeometryDto"/> into <paramref name="session"/>.Store.
-        /// No Revit API calls — safe to call from a background thread.
+        /// No Revit API calls. Safe to call from a background thread provided it is the SOLE writer
+        /// to <paramref name="session"/> maps during initial export (main thread must not access
+        /// ExportStateMap, ElementIdIndex, or ContainsMap concurrently).
         /// Updates ExportStateMap and ElementIdIndex on success.
         /// </summary>
         /// <returns>The IFC GUID assigned, or null if the element was skipped.</returns>
@@ -236,6 +238,8 @@ namespace IfcExport
             try
             {
                 string ifcGuid;
+                IfcBuildingStorey storey = ResolveStoreyFromDto(dto, session);
+                IfcRelContainedInSpatialStructure newRel = null;
                 using (var txn = session.Store.BeginTransaction("WriteElement"))
                 {
                     var i = session.Store.Instances;
@@ -264,7 +268,6 @@ namespace IfcExport
                     IfcElement entity = CreateEntityFromDto(session.Store, dto, guid, placement, productShape);
                     AttachPropertySetsFromDto(session.Store, entity, dto.PropertySets);
 
-                    IfcBuildingStorey storey = ResolveStoreyFromDto(dto, session);
                     if (!session.ContainsMap.TryGetValue(storey, out IfcRelContainedInSpatialStructure rel))
                     {
                         rel = i.New<IfcRelContainedInSpatialStructure>(r =>
@@ -272,11 +275,14 @@ namespace IfcExport
                             r.GlobalId          = IfcGloballyUniqueId.ConvertToBase64(Guid.NewGuid());
                             r.RelatingStructure = storey;
                         });
-                        session.ContainsMap[storey] = rel;
+                        newRel = rel; // remembered for post-commit map update
                     }
                     rel.RelatedElements.Add(entity);
                     txn.Commit();
                 }
+                // Update ContainsMap after successful commit — avoids zombie entity on failed commit.
+                if (newRel != null)
+                    session.ContainsMap[storey] = newRel;
 
                 session.ExportStateMap[dto.UniqueId]  = ifcGuid;
                 session.ElementIdIndex[dto.ElementId] = dto.UniqueId;
