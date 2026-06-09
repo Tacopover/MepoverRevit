@@ -311,7 +311,8 @@ namespace IfcExport
             if (_tasks.Count == 0 && _state == ExportState.Running && _session != null)
             {
                 bool initialDone = _session.TotalElements > 0
-                                && _session.ElementQueue.Count == 0;
+                                && _session.ElementQueue.Count == 0
+                                && (_writerThread == null || !_writerThread.IsAlive);
 
                 if (initialDone && !_session.InitialExportComplete)
                 {
@@ -625,6 +626,7 @@ namespace IfcExport
                     System.Windows.Threading.DispatcherPriority.Background,
                     (Action)(() =>
                     {
+                        if (_session == null) return; // session was cancelled — discard stale callback
                         _session.ExportedElements      = finalCount;
                         _session.InitialExportComplete = true;
                         _viewModel.ProgressValue = _session.TotalElements;
@@ -632,7 +634,7 @@ namespace IfcExport
                         _viewModel.OnOrchestratorStateChanged();
 
                         // Kick off a drain task if document changes accumulated during initial export.
-                        if (_session?.PendingChangeQueue.Count > 0 && _session.RevitDocument != null)
+                        if (_session.PendingChangeQueue.Count > 0 && _session.RevitDocument != null)
                             EnqueueDrainTask(_session.RevitDocument);
                     }));
             }
