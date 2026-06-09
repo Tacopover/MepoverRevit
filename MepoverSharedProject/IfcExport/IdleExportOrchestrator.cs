@@ -3,7 +3,9 @@ using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace IfcExport
 {
@@ -45,6 +47,12 @@ namespace IfcExport
         // All access on Revit main thread — no volatile needed.
         private bool _syncInProgress = false;
         private DateTime _syncStartedUtc = DateTime.MinValue;
+
+        // ------------------------------------------------------------------ background writer (producer-consumer)
+        private BlockingCollection<ElementGeometryDto> _dtoQueue;
+        private Thread _writerThread;
+        private CancellationTokenSource _writerCts;
+        private int _backgroundWrittenCount; // written only by background thread via Interlocked
 
         // If OnSynchronizedWithCentral never fires (failed/cancelled SWC), auto-clear after this many seconds.
         private const int SyncTimeoutSeconds = 120;
@@ -529,6 +537,124 @@ namespace IfcExport
 
                 return true;
             }));
+        }
+
+        private void StartBackgroundWriter()
+        {
+            _writerCts              = new CancellationTokenSource();
+            _dtoQueue               = new BlockingCollection<ElementGeometryDto>(boundedCapacity: 500);
+            _backgroundWrittenCount = 0;
+
+            _writerThread = new Thread(() => BackgroundWriterLoop(_writerCts.Token))
+            {
+                IsBackground = true,
+                Name         = "IFC-Background-Writer"
+            };
+            _writerThread.Start();
+        }
+
+        private void StopBackgroundWriter(bool waitForCompletion)
+        {
+            if (_dtoQueue != null && !_dtoQueue.IsAddingCompleted)
+                _dtoQueue.CompleteAdding();
+
+            _writerCts?.Cancel();
+
+            if (waitForCompletion)
+                _writerThread?.Join(TimeSpan.FromSeconds(30));
+
+            _dtoQueue?.Dispose();
+            _dtoQueue     = null;
+            _writerThread = null;
+            _writerCts?.Dispose();
+            _writerCts    = null;
+        }
+
+        private void SaveIfcInternal()
+        {
+            if (_session?.Store == null) return;
+            string target = _session.OutputFilePath;
+            string temp   = _session.OutputTempFilePath;
+            if (string.IsNullOrEmpty(target)) return;
+
+            try
+            {
+                _session.Store.SaveAs(temp, Xbim.IO.StorageType.Ifc);
+                if (System.IO.File.Exists(target))
+                    System.IO.File.Delete(target);
+                System.IO.File.Move(temp, target);
+                _session.LastSaveUtc = DateTime.UtcNow;
+
+                if (_session.CentralFilePath != null)
+                {
+                    try
+                    {
+                        _session.CentralFileTimestampAtLastSave =
+                            System.IO.File.GetLastWriteTimeUtc(_session.CentralFilePath);
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.Application.Current?.Dispatcher?.BeginInvoke(
+                    System.Windows.Threading.DispatcherPriority.Background,
+                    (Action)(() => _viewModel.StatusText = "Save failed: " + ex.Message));
+                if (System.IO.File.Exists(temp))
+                    try { System.IO.File.Delete(temp); } catch { }
+            }
+        }
+
+        private void BackgroundWriterLoop(CancellationToken ct)
+        {
+            var lastSave = DateTime.UtcNow;
+            try
+            {
+                foreach (ElementGeometryDto dto in _dtoQueue.GetConsumingEnumerable(ct))
+                {
+                    string guid = IfcElementWriter.WriteElementFromDto(dto, _session);
+                    if (guid != null)
+                    {
+                        int count = Interlocked.Increment(ref _backgroundWrittenCount);
+                        int total = _session.TotalElements;
+                        System.Windows.Application.Current?.Dispatcher?.BeginInvoke(
+                            System.Windows.Threading.DispatcherPriority.Background,
+                            (Action)(() =>
+                            {
+                                _viewModel.ProgressValue = count;
+                                _viewModel.StatusText    = string.Format("Writing {0} of {1} elements…", count, total);
+                            }));
+                    }
+
+                    if ((DateTime.UtcNow - lastSave).TotalSeconds >= SaveIntervalSeconds)
+                    {
+                        SaveIfcInternal();
+                        lastSave = DateTime.UtcNow;
+                    }
+                }
+            }
+            catch (OperationCanceledException) { /* expected on Cancel/Pause */ }
+
+            if (!ct.IsCancellationRequested)
+            {
+                // Queue fully drained — initial export complete.
+                SaveIfcInternal();
+                _session.ExportedElements      = _backgroundWrittenCount;
+                _session.InitialExportComplete = true;
+
+                System.Windows.Application.Current?.Dispatcher?.BeginInvoke(
+                    System.Windows.Threading.DispatcherPriority.Background,
+                    (Action)(() =>
+                    {
+                        _viewModel.ProgressValue = _session.TotalElements;
+                        _viewModel.StatusText    = "Export complete — monitoring for changes.";
+                        _viewModel.OnOrchestratorStateChanged();
+
+                        // Kick off a drain task if document changes accumulated during initial export.
+                        if (_session?.PendingChangeQueue.Count > 0 && _session.RevitDocument != null)
+                            EnqueueDrainTask(_session.RevitDocument);
+                    }));
+            }
         }
 
         private static string MakeSafeFileName(string name)
