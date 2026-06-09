@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Polyfills.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcElementWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\ElementGeometryDto.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportPersistenceService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportRequestHandler.cs" />
