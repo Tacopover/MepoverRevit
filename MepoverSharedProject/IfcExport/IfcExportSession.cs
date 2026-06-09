@@ -57,6 +57,12 @@ namespace IfcExport
         public string IfcVersion         { get; set; }
         public List<PsetMappingBlock> PsetMappings { get; set; } = new List<PsetMappingBlock>();
 
+        // ------------------------------------------------------------------ cached output paths
+        /// <summary>Absolute path of the final .ifc output file. Set once during the init task.</summary>
+        public string OutputFilePath { get; set; }
+        /// <summary>Absolute path of the atomic-swap temp file. Set once during the init task.</summary>
+        public string OutputTempFilePath { get; set; }
+
         // ------------------------------------------------------------------ change tracking (Phase 3)
 
         /// <summary>
@@ -138,6 +144,8 @@ namespace IfcExport
             LastDocumentChangedUtc     = DateTime.MinValue;
             LastStalenessCheckUtc      = DateTime.MinValue;
             CentralFileTimestampAtLastSave = DateTime.MinValue;
+            OutputFilePath     = null;
+            OutputTempFilePath = null;
         }
     }
 }

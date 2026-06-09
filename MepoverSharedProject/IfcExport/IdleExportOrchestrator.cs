@@ -344,6 +344,14 @@ namespace IfcExport
                 Document doc = uiApp.ActiveUIDocument?.Document;
                 if (doc == null) return true; // no active document — skip gracefully
 
+                if (string.IsNullOrEmpty(_session.OutputFilePath))
+                {
+                    string safeName = MakeSafeFileName(
+                        System.IO.Path.GetFileNameWithoutExtension(doc.Title ?? "export"));
+                    _session.OutputFilePath     = System.IO.Path.Combine(_session.DestinationFolder, safeName + ".ifc");
+                    _session.OutputTempFilePath = System.IO.Path.Combine(_session.DestinationFolder, safeName + "_partial.ifc");
+                }
+
                 bool done = IfcProjectInitializer.Initialize(_session, doc);
                 if (done)
                     EnqueueCollectTask(doc);
@@ -485,15 +493,9 @@ namespace IfcExport
                 if (_session?.Store == null)
                     return true;
 
-                string folder = _session.DestinationFolder;
-                string docTitle = uiApp.ActiveUIDocument?.Document?.Title ?? "export";
-                // Strip any existing extension from the title (e.g. "project.ifc" → "project")
-                // to prevent double extensions like "project.ifc.ifc" in the output filename.
-                string safeName = MakeSafeFileName(System.IO.Path.GetFileNameWithoutExtension(docTitle));
-                string target = System.IO.Path.Combine(folder, safeName + ".ifc");
-                // Temp path must end in .ifc: Xbim.SaveAs appends ".ifc" when the path
-                // does not already have that extension (confirmed by IfcQuickExporter).
-                string temp = System.IO.Path.Combine(folder, safeName + "_partial.ifc");
+                string target = _session.OutputFilePath;
+                string temp   = _session.OutputTempFilePath;
+                if (string.IsNullOrEmpty(target)) return true;
 
                 try
                 {
