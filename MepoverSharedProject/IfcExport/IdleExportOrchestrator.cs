@@ -714,6 +714,9 @@ namespace IfcExport
             // fires before Initialize() has created a new Store → drain writes to null Store.
             _needsRegenerate = false;
 
+            // Stop the background writer before resetting — it holds live references to the store.
+            StopBackgroundWriter(waitForCompletion: true);
+
             _session.ResetForFullReExport();
 
             // Immediately baseline the central file timestamp so the 60-second poll window
@@ -730,6 +733,7 @@ namespace IfcExport
 
             _tasks.Clear();
             EnqueueInitTask();
+            StartBackgroundWriter();
         }
 
         // ------------------------------------------------------------------ Phase 3 — change tracking
