@@ -629,7 +629,7 @@ namespace IfcExport
                     if ((DateTime.UtcNow - lastSave).TotalSeconds >= SaveIntervalSeconds)
                     {
                         SaveIfcInternal();
-                        lastSave = DateTime.UtcNow;
+                        lastSave = DateTime.UtcNow; // update regardless of save success — prevents retry storm
                     }
                 }
             }
@@ -639,13 +639,14 @@ namespace IfcExport
             {
                 // Queue fully drained — initial export complete.
                 SaveIfcInternal();
-                _session.ExportedElements      = _backgroundWrittenCount;
-                _session.InitialExportComplete = true;
+                int finalCount = _backgroundWrittenCount; // capture before dispatch
 
                 System.Windows.Application.Current?.Dispatcher?.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.Background,
                     (Action)(() =>
                     {
+                        _session.ExportedElements      = finalCount;
+                        _session.InitialExportComplete = true;
                         _viewModel.ProgressValue = _session.TotalElements;
                         _viewModel.StatusText    = "Export complete — monitoring for changes.";
                         _viewModel.OnOrchestratorStateChanged();
