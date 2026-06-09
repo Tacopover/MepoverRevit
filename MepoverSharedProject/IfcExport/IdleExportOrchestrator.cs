@@ -52,6 +52,9 @@ namespace IfcExport
         // Save cadence (seconds between periodic disk saves)
         private const int SaveIntervalSeconds = 5;
 
+        // Time budget per idle tick for element batching (milliseconds)
+        private const int BatchBudgetMs = 80;
+
         // Phase 4B — how often to poll the central file for non-plugin user changes
         private const int StalenessCheckIntervalSeconds = 60;
 
@@ -430,19 +433,22 @@ namespace IfcExport
                     }
                     else if (_session.ElementQueue.Count > 0)
                     {
-                        ElementId id = _session.ElementQueue.Dequeue();
-                        Element elem = doc.GetElement(id);
-                        if (elem != null)
+                        var sw = System.Diagnostics.Stopwatch.StartNew();
+                        while (_session.ElementQueue.Count > 0 && sw.ElapsedMilliseconds < BatchBudgetMs)
                         {
-                            IfcElementWriter.WriteElement(elem, _session);
-                            _session.ExportedElements++;
-                            _viewModel.ProgressValue = _session.ExportedElements;
-                            _viewModel.StatusText = string.Format(
-                                "Exporting element {0} of {1} \u2014 {2}",
-                                _session.ExportedElements,
-                                _session.TotalElements,
-                                elem.Name ?? string.Empty);
+                            ElementId id = _session.ElementQueue.Dequeue();
+                            Element elem = doc.GetElement(id);
+                            if (elem != null)
+                            {
+                                IfcElementWriter.WriteElement(elem, _session);
+                                _session.ExportedElements++;
+                            }
                         }
+                        _viewModel.ProgressValue = _session.ExportedElements;
+                        _viewModel.StatusText = string.Format(
+                            "Exporting {0} of {1}\u2026",
+                            _session.ExportedElements,
+                            _session.TotalElements);
                         moreWork = (_session.ElementQueue.Count > 0
                                  || _session.PendingChangeQueue.Count > 0);
                     }
