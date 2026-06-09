@@ -515,6 +515,9 @@ namespace IfcExport
 
         private void StartBackgroundWriter()
         {
+            System.Diagnostics.Debug.Assert(_writerThread == null,
+                "StartBackgroundWriter called while a writer thread is still running.");
+
             _writerCts              = new CancellationTokenSource();
             _dtoQueue               = new BlockingCollection<ElementGeometryDto>(boundedCapacity: 500);
             _backgroundWrittenCount = 0;
@@ -527,21 +530,24 @@ namespace IfcExport
             _writerThread.Start();
         }
 
-        private void StopBackgroundWriter(bool waitForCompletion)
+        // Returns true if the thread exited cleanly (or was not running); false if Join timed out.
+        private bool StopBackgroundWriter(bool waitForCompletion)
         {
             if (_dtoQueue != null && !_dtoQueue.IsAddingCompleted)
                 _dtoQueue.CompleteAdding();
 
             _writerCts?.Cancel();
 
+            bool exited = true;
             if (waitForCompletion)
-                _writerThread?.Join(TimeSpan.FromSeconds(30));
+                exited = _writerThread?.Join(TimeSpan.FromSeconds(30)) ?? true;
 
             _dtoQueue?.Dispose();
             _dtoQueue     = null;
             _writerThread = null;
             _writerCts?.Dispose();
             _writerCts    = null;
+            return exited;
         }
 
         private void SaveIfcInternal()
@@ -715,7 +721,13 @@ namespace IfcExport
             _needsRegenerate = false;
 
             // Stop the background writer before resetting — it holds live references to the store.
-            StopBackgroundWriter(waitForCompletion: true);
+            // If the thread does not exit within 30 s, skip this reset cycle to avoid a use-after-dispose crash.
+            if (!StopBackgroundWriter(waitForCompletion: true))
+            {
+                System.Diagnostics.Debug.WriteLine("IFC export: background writer did not exit in time — skipping re-export reset.");
+                StartBackgroundWriter(); // restart so the existing export continues
+                return;
+            }
 
             _session.ResetForFullReExport();
 
