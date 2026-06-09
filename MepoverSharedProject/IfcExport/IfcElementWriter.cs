@@ -222,6 +222,74 @@ namespace IfcExport
             return result;
         }
 
+        // ------------------------------------------------------------------ Xbim write (any thread, no Revit API)
+
+        /// <summary>
+        /// Writes a pre-extracted <see cref="ElementGeometryDto"/> into <paramref name="session"/>.Store.
+        /// No Revit API calls — safe to call from a background thread.
+        /// Updates ExportStateMap and ElementIdIndex on success.
+        /// </summary>
+        /// <returns>The IFC GUID assigned, or null if the element was skipped.</returns>
+        public static string WriteElementFromDto(ElementGeometryDto dto, IfcExportSession session)
+        {
+            if (dto == null || session?.Store == null) return null;
+            try
+            {
+                string ifcGuid;
+                using (var txn = session.Store.BeginTransaction("WriteElement"))
+                {
+                    var i = session.Store.Instances;
+
+                    var breps = new List<IfcFacetedBrep>();
+                    foreach (List<Triangle3d> solidTriangles in dto.Solids)
+                    {
+                        IfcFacetedBrep brep = TryCreateFacetedBrepFromTriangles(session.Store, solidTriangles);
+                        if (brep != null) breps.Add(brep);
+                    }
+                    if (breps.Count == 0) { txn.RollBack(); return null; }
+
+                    var shape = i.New<IfcShapeRepresentation>(s =>
+                    {
+                        s.ContextOfItems           = session.ModelContext;
+                        s.RepresentationIdentifier = "Body";
+                        s.RepresentationType       = "Brep";
+                    });
+                    foreach (var brep in breps) shape.Items.Add(brep);
+
+                    var guid         = IfcGloballyUniqueId.ConvertToBase64(Guid.NewGuid());
+                    ifcGuid          = guid.ToString();
+                    var placement    = WorldPlacement(session.Store);
+                    var productShape = i.New<IfcProductDefinitionShape>(r => r.Representations.Add(shape));
+
+                    IfcElement entity = CreateEntityFromDto(session.Store, dto, guid, placement, productShape);
+                    AttachPropertySetsFromDto(session.Store, entity, dto.PropertySets);
+
+                    IfcBuildingStorey storey = ResolveStoreyFromDto(dto, session);
+                    if (!session.ContainsMap.TryGetValue(storey, out IfcRelContainedInSpatialStructure rel))
+                    {
+                        rel = i.New<IfcRelContainedInSpatialStructure>(r =>
+                        {
+                            r.GlobalId          = IfcGloballyUniqueId.ConvertToBase64(Guid.NewGuid());
+                            r.RelatingStructure = storey;
+                        });
+                        session.ContainsMap[storey] = rel;
+                    }
+                    rel.RelatedElements.Add(entity);
+                    txn.Commit();
+                }
+
+                session.ExportStateMap[dto.UniqueId]  = ifcGuid;
+                session.ElementIdIndex[dto.ElementId] = dto.UniqueId;
+                return ifcGuid;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    string.Format("IfcElementWriter.WriteElementFromDto failed for '{0}': {1}", dto?.Name, ex.Message));
+                return null;
+            }
+        }
+
         // ------------------------------------------------------------------ geometry extraction
 
         private static List<Solid> ExtractSolids(Element elem)
@@ -286,6 +354,35 @@ namespace IfcExport
                 }));
         }
 
+        private static IfcFacetedBrep TryCreateFacetedBrepFromTriangles(
+            Xbim.Ifc.IfcStore store, List<Triangle3d> triangles)
+        {
+            if (triangles == null || triangles.Count == 0) return null;
+
+            var ifcFaces = new List<IfcFace>(triangles.Count);
+            foreach (Triangle3d tri in triangles)
+            {
+                Triangle3d t = tri; // copy for lambda capture
+                ifcFaces.Add(store.Instances.New<IfcFace>(f =>
+                    f.Bounds.Add(store.Instances.New<IfcFaceOuterBound>(b =>
+                    {
+                        b.Orientation = true;
+                        b.Bound = store.Instances.New<IfcPolyLoop>(loop =>
+                        {
+                            loop.Polygon.Add(store.Instances.New<IfcCartesianPoint>(p => p.SetXYZ(t.X0, t.Y0, t.Z0)));
+                            loop.Polygon.Add(store.Instances.New<IfcCartesianPoint>(p => p.SetXYZ(t.X1, t.Y1, t.Z1)));
+                            loop.Polygon.Add(store.Instances.New<IfcCartesianPoint>(p => p.SetXYZ(t.X2, t.Y2, t.Z2)));
+                        });
+                    }))));
+            }
+
+            return store.Instances.New<IfcFacetedBrep>(brep =>
+                brep.Outer = store.Instances.New<IfcClosedShell>(shell =>
+                {
+                    foreach (var f in ifcFaces) shell.CfsFaces.Add(f);
+                }));
+        }
+
         // ------------------------------------------------------------------ storey lookup
 
         private static IfcBuildingStorey ResolveStorey(Element elem, IfcExportSession session)
@@ -295,6 +392,17 @@ namespace IfcExport
                 && session.LevelMap.TryGetValue(levelId, out IfcBuildingStorey storey))
                 return storey;
 
+            return session.FallbackStorey;
+        }
+
+        private static IfcBuildingStorey ResolveStoreyFromDto(ElementGeometryDto dto, IfcExportSession session)
+        {
+            if (dto.LevelId != -1)
+            {
+                var levelId = new ElementId(dto.LevelId);
+                if (session.LevelMap.TryGetValue(levelId, out IfcBuildingStorey storey))
+                    return storey;
+            }
             return session.FallbackStorey;
         }
 
@@ -494,6 +602,30 @@ namespace IfcExport
             return e;
         }
 
+        private static IfcElement CreateEntityFromDto(
+            Xbim.Ifc.IfcStore store,
+            ElementGeometryDto dto,
+            IfcGloballyUniqueId guid,
+            IfcLocalPlacement placement,
+            IfcProductDefinitionShape productShape)
+        {
+            IfcElement e;
+            if (!string.IsNullOrEmpty(dto.ExportToIfcAs)
+                && IfcTypeNameMap.TryGetValue(dto.ExportToIfcAs, out var namedFactory))
+                e = namedFactory(store);
+            else if (dto.CategoryId != 0
+                && CategoryEntityMap.TryGetValue(dto.CategoryId, out var catFactory))
+                e = catFactory(store);
+            else
+                e = store.Instances.New<IfcBuildingElementProxy>();
+
+            e.Name            = dto.Name;
+            e.GlobalId        = guid;
+            e.ObjectPlacement = placement;
+            e.Representation  = productShape;
+            return e;
+        }
+
         // ------------------------------------------------------------------ property sets
 
         private static void AttachPropertySets(
@@ -539,6 +671,46 @@ namespace IfcExport
                     }));
                 }
 
+                if (pset.HasProperties.Count == 0) continue;
+
+                i.New<IfcRelDefinesByProperties>(r =>
+                {
+                    r.GlobalId                   = IfcGloballyUniqueId.ConvertToBase64(Guid.NewGuid());
+                    r.RelatedObjects.Add(entity);
+                    r.RelatingPropertyDefinition = pset;
+                });
+            }
+        }
+
+        private static void AttachPropertySetsFromDto(
+            Xbim.Ifc.IfcStore store,
+            IfcElement entity,
+            List<PsetData> propertySets)
+        {
+            if (propertySets == null || propertySets.Count == 0) return;
+            var i = store.Instances;
+
+            foreach (PsetData psetData in propertySets)
+            {
+                if (!EntityMatchesFilter(entity, psetData.IfcTypeFilters)) continue;
+
+                var pset = i.New<IfcPropertySet>(ps =>
+                {
+                    ps.GlobalId = IfcGloballyUniqueId.ConvertToBase64(Guid.NewGuid());
+                    ps.Name     = psetData.PsetName;
+                });
+
+                foreach (PropertyData prop in psetData.Properties)
+                {
+                    string propName  = prop.IfcPropertyName;
+                    string dataType  = prop.DataType;
+                    string propValue = prop.Value;
+                    pset.HasProperties.Add(i.New<IfcPropertySingleValue>(p =>
+                    {
+                        p.Name         = propName;
+                        p.NominalValue = MakeIfcValue(dataType, propValue);
+                    }));
+                }
                 if (pset.HasProperties.Count == 0) continue;
 
                 i.New<IfcRelDefinesByProperties>(r =>
