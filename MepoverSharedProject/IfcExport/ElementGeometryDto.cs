@@ -21,8 +21,8 @@ namespace IfcExport
         public string Name { get; set; }
         public int CategoryId { get; set; }
 
-        /// <summary>Level ElementId for storey lookup; null if the element has no level parameter.</summary>
-        public ElementId LevelId { get; set; }
+        /// <summary>Revit Level integer ID for storey lookup; -1 if the element has no level parameter.</summary>
+        public int LevelId { get; set; }
 
         /// <summary>Value of the "Export To IFC As" Revit parameter, or null.</summary>
         public string ExportToIfcAs { get; set; }

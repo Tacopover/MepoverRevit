@@ -172,7 +172,7 @@ namespace IfcExport
                     ElementId     = element.Id,
                     Name          = element.Name ?? element.Category?.Name ?? "Element",
                     CategoryId    = element.Category?.Id?.IntegerValue ?? 0,
-                    LevelId       = GetLevelId(element),
+                    LevelId       = GetLevelId(element)?.IntegerValue ?? -1,
                     ExportToIfcAs = GetExportToIfcAs(element),
                     Solids        = solidData,
                     PropertySets  = ExtractPsetData(element, psetMappings)
