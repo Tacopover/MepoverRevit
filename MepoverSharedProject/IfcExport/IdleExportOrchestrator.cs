@@ -1,4 +1,4 @@
-using Autodesk.Revit.DB;
+﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
@@ -114,6 +114,7 @@ namespace IfcExport
             EnqueueInitTask();
 
             _state = ExportState.Running;
+            StartBackgroundWriter();
             _uiApp.Idling += OnIdling;
             SubscribeDocumentChanged();
             SubscribeWorksharingEvents();
@@ -146,6 +147,7 @@ namespace IfcExport
                 _uiApp.Idling -= OnIdling;
                 UnsubscribeDocumentChanged();
                 UnsubscribeWorksharingEvents();
+                StopBackgroundWriter(waitForCompletion: false);
                 _session?.Dispose();
                 _session = null;
                 _viewModel.OnOrchestratorStateChanged();
@@ -438,43 +440,51 @@ namespace IfcExport
 
                     bool moreWork;
 
-                    if (_session.PendingChangeQueue.Count > 0)
+                    // Pending changes: only process after initial export is complete.
+                    // During initial export the background thread is the sole writer to the Xbim store.
+                    if (_session.InitialExportComplete && _session.PendingChangeQueue.Count > 0)
                     {
-                        // Priority: process one pending change before the initial export queue.
                         PendingChange change = _session.PendingChangeQueue.Dequeue();
                         ProcessPendingChange(change, doc);
                         _viewModel.PendingChanges = _session.PendingChangeQueue.Count;
-                        moreWork = (_session.PendingChangeQueue.Count > 0
-                                 || _session.ElementQueue.Count > 0);
+                        moreWork = (_session.PendingChangeQueue.Count > 0);
                     }
-                    else if (_session.ElementQueue.Count > 0)
+                    else if (_session.ElementQueue.Count > 0 && !_session.InitialExportComplete)
                     {
+                        // Extract a batch of DTOs within the time budget and hand them to the background writer.
                         var sw = System.Diagnostics.Stopwatch.StartNew();
                         while (_session.ElementQueue.Count > 0 && sw.ElapsedMilliseconds < BatchBudgetMs)
                         {
-                            ElementId id = _session.ElementQueue.Dequeue();
-                            Element elem = doc.GetElement(id);
+                            ElementId id   = _session.ElementQueue.Peek();
+                            Element   elem = doc.GetElement(id);
                             if (elem != null)
                             {
-                                IfcElementWriter.WriteElement(elem, _session);
-                                _session.ExportedElements++;
+                                var dto = IfcElementWriter.ExtractDto(elem, _session.PsetMappings);
+                                if (dto != null && _dtoQueue != null && !_dtoQueue.TryAdd(dto, 0))
+                                    break; // DTO queue full — come back next tick
                             }
+                            _session.ElementQueue.Dequeue();
                         }
-                        _viewModel.ProgressValue = _session.ExportedElements;
-                        _viewModel.StatusText = string.Format(
-                            "Exporting {0} of {1}\u2026",
-                            _session.ExportedElements,
-                            _session.TotalElements);
-                        moreWork = (_session.ElementQueue.Count > 0
-                                 || _session.PendingChangeQueue.Count > 0);
+
+                        if (_session.ElementQueue.Count == 0 && _dtoQueue != null && !_dtoQueue.IsAddingCompleted)
+                            _dtoQueue.CompleteAdding(); // signal background thread: no more DTOs
+
+                        // Keep drain alive: more elements to extract OR waiting for background thread to finish.
+                        moreWork = (_session.ElementQueue.Count > 0 || !_session.InitialExportComplete);
+                    }
+                    else if (!_session.InitialExportComplete)
+                    {
+                        // All elements extracted; background thread still writing.
+                        moreWork = true;
                     }
                     else
                     {
-                        return true; // Nothing to do — task complete.
+                        return true; // Nothing to do.
                     }
 
-                    // Periodic disk save.
-                    if ((DateTime.UtcNow - _session.LastSaveUtc).TotalSeconds >= SaveIntervalSeconds)
+                    // Periodic disk save — only after initial export is complete (background thread owns saves during initial export).
+                    if (_session.InitialExportComplete
+                        && (DateTime.UtcNow - _session.LastSaveUtc).TotalSeconds >= SaveIntervalSeconds)
                     {
                         EnqueueSaveTask();
                         _session.LastSaveUtc = DateTime.UtcNow;
@@ -498,43 +508,7 @@ namespace IfcExport
         {
             _tasks.Add(new IdleTask(uiApp =>
             {
-                if (_session?.Store == null)
-                    return true;
-
-                string target = _session.OutputFilePath;
-                string temp   = _session.OutputTempFilePath;
-                if (string.IsNullOrEmpty(target)) return true;
-
-                try
-                {
-                    _session.Store.SaveAs(temp, Xbim.IO.StorageType.Ifc);
-
-                    // Atomic swap: only replace the target after a successful write.
-                    if (System.IO.File.Exists(target))
-                        System.IO.File.Delete(target);
-                    System.IO.File.Move(temp, target);
-
-                    _session.LastSaveUtc = DateTime.UtcNow;
-
-                    // Phase 4B: re-baseline central file timestamp so the staleness check
-                    // does not false-positive on changes already incorporated in this save.
-                    if (_session.CentralFilePath != null)
-                    {
-                        try
-                        {
-                            _session.CentralFileTimestampAtLastSave =
-                                System.IO.File.GetLastWriteTimeUtc(_session.CentralFilePath);
-                        }
-                        catch { }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _viewModel.StatusText = "Save failed: " + ex.Message;
-                    if (System.IO.File.Exists(temp))
-                        System.IO.File.Delete(temp);
-                }
-
+                SaveIfcInternal();
                 return true;
             }));
         }
