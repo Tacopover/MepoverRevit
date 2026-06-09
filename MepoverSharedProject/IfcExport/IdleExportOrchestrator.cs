@@ -147,7 +147,7 @@ namespace IfcExport
                 _uiApp.Idling -= OnIdling;
                 UnsubscribeDocumentChanged();
                 UnsubscribeWorksharingEvents();
-                StopBackgroundWriter(waitForCompletion: false);
+                StopBackgroundWriter(waitForCompletion: true);
                 _session?.Dispose();
                 _session = null;
                 _viewModel.OnOrchestratorStateChanged();
@@ -492,7 +492,7 @@ namespace IfcExport
 
                     if (moreWork)
                     {
-                        if (_needsRegenerate && _session.PendingChangeQueue.Count > 0)
+                        if (_session.InitialExportComplete && _needsRegenerate && _session.PendingChangeQueue.Count > 0)
                             EnqueueRegenerateTask(doc);
                         else
                             EnqueueDrainTask(doc);
