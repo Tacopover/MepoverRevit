@@ -69,6 +69,17 @@ namespace IfcExport
         // Quiet period: skip processing for this many seconds after a DocumentChanged event.
         private const double QuietPeriodSeconds = 2.0;
 
+        // How long the idle event must fire continuously before the export pump resumes.
+        private const double UserIdleGateSeconds = 5.0;
+
+        // Gap between rapid-fire ticks that signals Revit was busy (user was active).
+        private const double IdleGapResetThresholdSeconds = 0.3;
+
+        // Tracks when the first idle tick arrived after the last user activity.
+        private DateTime _firstIdleTickUtc = DateTime.MinValue;
+        private DateTime _lastIdleTickUtc = DateTime.MinValue;
+        private bool _wasRapidFiring = false;
+
         public ExportState State => _state;
 
         /// <summary>
@@ -275,9 +286,37 @@ namespace IfcExport
             if (_syncInProgress)
                 return;
 
+            DateTime now = DateTime.UtcNow;
+
+            // Gap detection: if we were in rapid-fire mode and a gap appeared, Revit was
+            // occupied by user interaction (navigation, selection, etc.). Restart idle gate.
+            if (_wasRapidFiring
+                && _lastIdleTickUtc != DateTime.MinValue
+                && (now - _lastIdleTickUtc).TotalSeconds > IdleGapResetThresholdSeconds)
+            {
+                _firstIdleTickUtc = DateTime.MinValue;
+            }
+            _lastIdleTickUtc = now;
+            _wasRapidFiring = false;
+
+            // Wait for the user to be truly idle: don't pump until the idle event has
+            // been firing continuously for UserIdleGateSeconds with no detected activity.
+            if (_firstIdleTickUtc == DateTime.MinValue)
+                _firstIdleTickUtc = now;
+
+            if ((now - _firstIdleTickUtc).TotalSeconds < UserIdleGateSeconds)
+            {
+                e.SetRaiseWithoutDelay();
+                _wasRapidFiring = true;
+                return;
+            }
+
             // Call with no args = "fire again immediately"; omit = Revit default cadence.
             if (_tasks.Count > 0)
+            {
                 e.SetRaiseWithoutDelay();
+                _wasRapidFiring = true;
+            }
             try
             {
                 PumpTasks((UIApplication)sender);
@@ -841,8 +880,9 @@ namespace IfcExport
         {
             if (_session == null || _state != ExportState.Running) return;
 
-            // Always reset the quiet-period clock and flag geometry as stale.
+            // Always reset the quiet-period clock, idle gate, and flag geometry as stale.
             _session.LastDocumentChangedUtc = DateTime.UtcNow;
+            _firstIdleTickUtc = DateTime.MinValue;
             _needsRegenerate = true;
 
             // During SWC, Revit fires DocumentChanged for workset/ownership operations that are not

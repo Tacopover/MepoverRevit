@@ -76,3 +76,46 @@ Use `#if REVIT2025` guards for version-specific API divergences. Never put logic
 - `Revit_All_Main_Versions_API_x64` NuGet — provides Revit API per version
 - `Xbim.Essentials` — IFC file read/write (v6.0.489 for 2021–2024, v6.0.461 for 2025)
 - `MahApps.Metro.IconPacks` — UI icons
+
+## Documentation Hub
+
+- Hub: `C:\Users\taco\OneDrive - MEPover\Taco\Notes\Obsidian Vault\Project Docs\MepoverRevit\`
+- Temp plans: `.claude\plans\` — delete when task done; save 2–3 line summary to Decisions-Log first
+- Session end: run `/session-handoff` — writes Claude memory + Obsidian Session-Summary + Decisions-Log entries
+- Cross-project patterns: check `C:\Users\taco\OneDrive - MEPover\Taco\Notes\Obsidian Vault\Project Docs\_Cross-Project\` before implementing a known pattern
+- Do NOT log to hub: git history, code structure, CLAUDE.md content, or anything already in the repo
+
+---
+
+## Choosing an agent harness: fable-harness vs. superpowers
+
+Two overlapping systems are available: the `/fable-harness` skill and the `superpowers`
+plugin (brainstorming, writing-plans, subagent-driven-development, systematic-debugging,
+test-driven-development, etc.). **Pick exactly one per task, at the start, and stay inside
+it for the whole task.** Never invoke both for the same piece of work — their delegation
+loops and verification rules overlap and will waste tokens or give contradictory instructions.
+
+Route by what the task needs most:
+
+- **Requirements are ambiguous, or this is new feature/design work** → superpowers
+  (`brainstorming` → `writing-plans` → `subagent-driven-development`). Its hard
+  design-approval gate is worth the friction when the shape of the solution isn't
+  already obvious.
+- **Debugging a failure with an unclear root cause** → superpowers (`systematic-debugging`).
+  Its 4-phase root-cause process is more rigorous than fable-harness's verification loop.
+- **Writing new logic that needs regression protection** → superpowers
+  (`test-driven-development`).
+- **Need an isolated workspace, or deciding how to land/merge a finished branch** →
+  superpowers (`using-git-worktrees`, `finishing-a-development-branch`).
+- **The task is already well-scoped** — target files and expected behavior are clear,
+  it's mostly implementation across one or several files, and cost/speed matters
+  (many small mechanical edits) → `/fable-harness`. It partitions the work into
+  Haiku-executed briefs and skips ceremony that well-scoped work doesn't need.
+- **User explicitly names one** (`/fable-harness`, or a specific superpowers skill) →
+  use that one, full stop.
+
+If a task starts in superpowers and reaches its own execution stage, use
+`subagent-driven-development` for delegation — do not also invoke fable-harness's
+Phase 3 on top of it. Likewise, once inside fable-harness, don't reach for
+`brainstorming` mid-task if Phase 0's ambiguity check already resolved the question —
+that's the friction fable-harness exists to avoid.

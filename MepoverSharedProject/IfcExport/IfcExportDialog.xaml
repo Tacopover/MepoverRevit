@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         mc:Ignorable="d"
         Title="IFC Export" Height="250" Width="500"
         WindowStyle="None" AllowsTransparency="True"
@@ -34,12 +35,14 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="0" Content="&#x2699;"
+                <Button Grid.Column="0"
                         Command="{Binding OpenSettingsCommand}"
                         Style="{StaticResource IconButton}"
                         ToolTip="Settings"
                         HorizontalAlignment="Left" VerticalAlignment="Center"
-                        Width="28" Height="28" FontSize="16" Margin="4,0,0,0"/>
+                        Width="28" Height="28" Margin="4,0,0,0">
+                    <iconPacks:PackIconMaterial Kind="Cog" Width="14" Height="14"/>
+                </Button>
 
                 <Border Grid.Column="1" CornerRadius="2" BorderBrush="CornflowerBlue"
                         BorderThickness="3" VerticalAlignment="Center" Padding="10,2">

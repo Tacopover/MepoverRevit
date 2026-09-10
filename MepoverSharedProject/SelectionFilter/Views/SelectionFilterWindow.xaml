@@ -80,7 +80,7 @@
             <Border Grid.Row="2" Margin="12,6,12,6" BorderBrush="CornflowerBlue" BorderThickness="1" CornerRadius="3">
                 <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True"
                           CanUserAddRows="False" CanUserDeleteRows="False"
-                          CanUserSortColumns="False"
+                          CanUserSortColumns="True"
                           BorderThickness="0" Background="White" GridLinesVisibility="None"
                           RowHeaderWidth="0" HeadersVisibility="Column"
                           ScrollViewer.HorizontalScrollBarVisibility="Auto">
@@ -94,9 +94,9 @@
                         </Style>
                     </DataGrid.ColumnHeaderStyle>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*"/>
-                        <DataGridTextColumn Header="Family and type" Binding="{Binding FamilyAndType}" Width="*"/>
-                        <DataGridTextColumn Header="Data type" Binding="{Binding DataType}" Width="110"/>
+                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" SortMemberPath="Value" Width="*"/>
+                        <DataGridTextColumn Header="Family and type" Binding="{Binding FamilyAndType}" SortMemberPath="FamilyAndType" Width="*"/>
+                        <DataGridTextColumn Header="Data type" Binding="{Binding DataType}" SortMemberPath="DataType" Width="110"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>

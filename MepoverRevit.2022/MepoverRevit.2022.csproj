@@ -50,6 +50,7 @@
     <BuildInParallel>false</BuildInParallel>
     <!-- Override 'OutputPath' to Debug/Release + Revit version -->
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <RevitVersion>2022</RevitVersion>
     <OutputPath>..\bin\$(Configuration)\$(RevitVersion)</OutputPath>
   </PropertyGroup>
   <ItemGroup>
@@ -80,7 +81,7 @@
     <PackageReference Include="System.Text.Json">
       <Version>8.0.5</Version>
     </PackageReference>
-    <PackageReference Include="Xbim.Essentials">
+    <PackageReference Include="Xbim.Essentials" Condition="'$(Configuration)' != 'Release'">
       <Version>6.0.489</Version>
     </PackageReference>
   </ItemGroup>

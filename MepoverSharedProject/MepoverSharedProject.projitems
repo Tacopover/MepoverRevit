@@ -12,19 +12,19 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Polyfills.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BaseViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcElementWriter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\ElementGeometryDto.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportCommand.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportPersistenceService.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportRequestHandler.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSession.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleExportOrchestrator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleTask.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml.cs">
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcElementWriter.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\ElementGeometryDto.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportCommand.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportPersistenceService.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportRequestHandler.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSession.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportViewModel.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleExportOrchestrator.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IdleTask.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml.cs" Condition="'$(Configuration)' != 'Release'">
       <DependentUpon>IfcExportDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml.cs">
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml.cs" Condition="'$(Configuration)' != 'Release'">
       <DependentUpon>IfcExportSettingsDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\ClashDetectorCommand.cs" />
@@ -49,11 +49,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)ClashDetector\Views\HostLinksControl.xaml.cs">
       <DependentUpon>HostLinksControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcProjectInitializer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcQuickExporter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PendingChange.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\WsChangeTestCommand.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PsetMappingParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcProjectInitializer.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\IfcQuickExporter.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PendingChange.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\WsChangeTestCommand.cs" Condition="'$(Configuration)' != 'Release'" />
+    <Compile Include="$(MSBuildThisFileDirectory)IfcExport\PsetMappingParser.cs" Condition="'$(Configuration)' != 'Release'" />
     <Compile Include="$(MSBuildThisFileDirectory)RelayCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RevitApplication.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SheetCopier\DataGridColumnTPO.cs" />
@@ -119,11 +119,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportDialog.xaml" Condition="'$(Configuration)' != 'Release'">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)IfcExport\IfcExportSettingsDialog.xaml" Condition="'$(Configuration)' != 'Release'">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -181,6 +181,6 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\OffIncrem.png" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\SF.png" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\ClashDetector.png" />
-    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\IfcExport.png" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)resources\IfcExport.png" Condition="'$(Configuration)' != 'Release'" />
   </ItemGroup>
 </Project>
